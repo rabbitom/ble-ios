@@ -14,8 +14,6 @@
 + (instancetype)sharedInstance;
 + (CBCentralManager*)central;
 
-- (void)addDeviceClassByParams: (NSDictionary*)params;
-
 - (void)loadDevices: (NSString*)filePath;
 
 - (void)searchDevices;
