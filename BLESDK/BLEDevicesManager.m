@@ -148,7 +148,6 @@ static id instance;
                 deviceClass = [BLEDevice class];
         }
         device = [[deviceClass alloc] initWithPeripheral: peripheral advertisementData:advertisementData];
-        ((BLEDevice*)device).rssi = [RSSI intValue];
         NSLog(@"device created for peripheral: %@ of class: %@", peripheral, NSStringFromClass(deviceClass));
         [devices setObject:device forKey:peripheral.identifier];
     }
@@ -157,6 +156,7 @@ static id instance;
         if(originalPeripheral != peripheral)
             NSLog(@"device already created with peripheral: %@, new found peripheral: %@", originalPeripheral, peripheral);
     }
+    ((BLEDevice*)device).rssi = [RSSI intValue];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"BLEDevice.FoundDevice" object:device];
 }
 
