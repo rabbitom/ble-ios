@@ -13,9 +13,11 @@
 {
     NSMutableDictionary *propertyCharacteristics;
 }
-+ (NSDictionary*) services;//ServiceUUID(CBUUID) : serviceName(String)
 
-+ (NSDictionary*) characteristics;//CharateristicUUID(CBUUID) : propertyName(String)
++ (NSDictionary*) defaultServices;//ServiceUUID(CBUUID) : serviceName(String)
++ (NSDictionary*) defaultCharacteristics;//CharateristicUUID(CBUUID) : propertyName(String)
+- (NSDictionary*) services;
+- (NSDictionary*) characteristics;
 
 @property CBPeripheral *peripheral;
 @property (readonly) NSArray *advertisements;
@@ -27,7 +29,7 @@
 
 @property (readonly) BOOL isConnected;
 
-- (id)initWithPeripheral: (CBPeripheral*)peripheral advertisementData: (NSDictionary*)ad;
+- (id)initWithPeripheral: (CBPeripheral*)peripheral advertisementData: (NSDictionary*)ad classMetadata: (NSDictionary*)classMetadata;
 - (void)updateAdvertisementData: (NSDictionary*)ad;
 
 - (void)connect;

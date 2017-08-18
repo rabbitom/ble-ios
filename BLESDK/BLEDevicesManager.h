@@ -14,7 +14,7 @@
 + (instancetype)sharedInstance;
 + (CBCentralManager*)central;
 
-- (void)loadDevices: (NSString*)filePath;
+- (void)addSearchFilter: (NSString*)filePath;
 
 - (void)searchDevices;
 - (void)stopSearching;

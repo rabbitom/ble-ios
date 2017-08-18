@@ -17,6 +17,9 @@
 
     NSMutableArray *servicesOnDiscover;//peripheral services to discover characteristics
     NSMutableArray *characteristicUUIDsToDiscover;
+    
+    NSMutableDictionary *servicesDict;
+    NSMutableDictionary *characteristicsDict;
 }
 
 @end
@@ -24,7 +27,7 @@
 
 @implementation BLEDevice
 
-- (id)initWithPeripheral: (CBPeripheral*)peripheral advertisementData: (NSDictionary*)ad {
+- (id)initWithPeripheral: (CBPeripheral*)peripheral advertisementData: (NSDictionary*)ad classMetadata: (NSDictionary*)classMetadata {
     if(self = [super init]) {
         _peripheral = peripheral;
         _peripheral.delegate = self;
@@ -32,6 +35,22 @@
         [self parseAdvertisementData];
         propertyCharacteristics = [NSMutableDictionary dictionary];
         servicesOnDiscover = [NSMutableArray array];
+        if(classMetadata) {
+            servicesDict = [NSMutableDictionary dictionary];
+            characteristicsDict = [NSMutableDictionary dictionary];
+            NSArray *servicesArray = classMetadata[@"services"];
+            for(NSDictionary *serviceItem in servicesArray) {
+                NSString *uuid = serviceItem[@"uuid"];
+                NSString *name = serviceItem[@"name"];
+                [servicesDict setObject:name forKey:[CBUUID UUIDWithString:uuid]];
+                NSArray *characteristicsArray = serviceItem[@"characteristics"];
+                for(NSDictionary *characteristicItem in characteristicsArray) {
+                    NSString *characteristicUuid = characteristicItem[@"uuid"];
+                    NSString *characteristicName = characteristicItem[@"name"];
+                    [characteristicsDict setObject:characteristicName forKey:[CBUUID UUIDWithString:characteristicUuid]];
+                }
+            }
+        }
     }
     return self;
 }
@@ -79,18 +98,32 @@
     return STRING_BY_DEFAULT(deviceName, defaultName);
 }
 
-+ (NSDictionary *)services {
++ (NSDictionary *)defaultServices {
     return nil;
 }
 
-+ (NSDictionary *)characteristics {
++ (NSDictionary *)defaultCharacteristics {
     return nil;
+}
+
+- (NSDictionary *)services {
+    if(servicesDict != nil)
+        return servicesDict;
+    else
+        return [self.class defaultServices];
+}
+
+- (NSDictionary *)characteristics {
+    if(characteristicsDict != nil)
+        return characteristicsDict;
+    else
+        return [self.class defaultCharacteristics];
 }
 
 - (void)onConnected {
     if(self.peripheral.services == nil) {
         [servicesOnDiscover removeAllObjects];
-        NSDictionary *characteristics = [self.class characteristics];
+        NSDictionary *characteristics = [self characteristics];
         if(characteristics != nil)
             characteristicUUIDsToDiscover = [NSMutableArray arrayWithArray:characteristics.allKeys];
         else
@@ -205,7 +238,7 @@
         {
             CBUUID *characteristicUUID = characteristic.UUID;
             if([characteristicUUIDsToDiscover containsObject:characteristicUUID]) {
-                NSString *propertyName = [self.class characteristics][characteristicUUID];
+                NSString *propertyName = [self characteristics][characteristicUUID];
                 [propertyCharacteristics setObject:characteristic forKey:propertyName];
                 [characteristicUUIDsToDiscover removeObject:characteristicUUID];
                 NSLog(@"found characteristic for property: %@", propertyName);
@@ -222,7 +255,7 @@
         NSLog(@"CBPeripheral update value of characteristic %@ error: %@", characteristic, error);
         return;
     }
-    NSString *propertyName = [[self.class characteristics] objectForKey:characteristic.UUID];
+    NSString *propertyName = [[self characteristics] objectForKey:characteristic.UUID];
     if(propertyName != nil) {
         [self onReceiveData:characteristic.value forProperty:propertyName];
         NSLog(@"data for %@ = %@", propertyName, characteristic.value);
@@ -235,9 +268,9 @@
 -(void)peripheral:(CBPeripheral *)peripheral didWriteValueForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error
 {
     if (error == nil) {
-        NSLog(@"操作成功");
+        NSLog(@"Value write succeed!");
     }else{
-        NSLog(@"操作失败");
+        NSLog(@"Value write failed: %@", error);
     }
 }
 @end

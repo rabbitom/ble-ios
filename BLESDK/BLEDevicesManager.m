@@ -46,19 +46,18 @@ static id instance;
     return self;
 }
 
-- (void)loadDevices: (NSString*)devicesPath {
+- (void)addSearchFilter: (NSString*)filePath {
     @try {
-        if(devicesPath == nil)
-            @throw [NSException exceptionWithName:@"FileNotFound" reason:@"bledevices.json file not found" userInfo:nil];
-        NSData *devicesData = [NSData dataWithContentsOfFile:devicesPath];
+        if(filePath == nil)
+            @throw [NSException exceptionWithName:@"FileNotFound" reason:@"Device definition file not found" userInfo:@{@"path":filePath}];
+        NSData *filterData = [NSData dataWithContentsOfFile:filePath];
         NSError *error = nil;
-        id bleDevices = [NSJSONSerialization JSONObjectWithData:devicesData options:NSJSONReadingAllowFragments error:&error];
+        id filter = [NSJSONSerialization JSONObjectWithData:filterData options:NSJSONReadingAllowFragments error:&error];
         if(error)
             @throw [NSException exceptionWithName:@"JSON Error" reason:@"Cannot parse JSON" userInfo:@{@"error": error}];
-        if(![bleDevices isKindOfClass:[NSArray class]])
-            @throw [NSException exceptionWithName:@"JSON Error" reason:@"JSON object is not NSArray" userInfo:nil];
-        for(NSDictionary *deviceMetadata in (NSArray*)bleDevices)
-            [self addDeviceClassByMetadata: deviceMetadata];
+        if(![filter isKindOfClass:[NSDictionary class]])
+            @throw [NSException exceptionWithName:@"JSON Error" reason:@"JSON object is not NSDictionary" userInfo:nil];
+        [self addDeviceClassByMetadata: filter];
     }
     @catch (NSException *exception) {
         NSLog(@"parse bledevices failed: %@", exception);
@@ -88,16 +87,19 @@ static id instance;
 }
 
 - (void)addDeviceClassByMetadata: (NSDictionary*)metadata {
-    NSString *className = metadata[@"className"];
+    NSString *className = metadata[@"class"];
     if(className != nil) {
         Class deviceClass = NSClassFromString(className);
         if(deviceClasses != nil) {
             NSMutableDictionary *deviceClassMetadata = [NSMutableDictionary dictionaryWithDictionary:metadata];
             deviceClassMetadata[@"class"] = deviceClass;
-            NSString *mainService = deviceClassMetadata[@"mainService"];
-            if(mainService != nil)
-                deviceClassMetadata[@"mainServiceUUID"] = [CBUUID UUIDWithString:mainService];
-            [deviceClasses addObject:deviceClassMetadata];
+            NSDictionary *advertisement = deviceClassMetadata[@"advertisement"];
+            if(advertisement != nil) {
+                NSString *mainService = advertisement[@"service"];
+                if(mainService != nil)
+                    deviceClassMetadata[@"mainServiceUUID"] = [CBUUID UUIDWithString:mainService];
+                [deviceClasses addObject:deviceClassMetadata];
+            }
         }
     }
 }
@@ -110,6 +112,22 @@ static id instance;
 
 - (void)centralManagerDidUpdateState:(CBCentralManager *)central {
     NSLog(@"CBCentralManager State: %@", [BLEUtility centralState:central.state]);
+}
+
+- (BOOL)checkForAdvertisementName: (NSString*)advertisementName withClass: (NSDictionary*)deviceClassMetadata {
+    NSDictionary *advertisement = deviceClassMetadata[@"advertisement"];
+    if(advertisement != nil) {
+        NSString *classAdvertisementNamePattern = advertisement[@"nameFilterPattern"];
+        if(classAdvertisementNamePattern != nil) {
+            if(advertisementName != nil) {
+                NSPredicate *namePre = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", classAdvertisementNamePattern];
+                return [namePre evaluateWithObject:advertisementName];
+            }
+            else
+                return NO;
+        }
+    }
+    return YES;
 }
 
 - (void)centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral advertisementData:(NSDictionary<NSString *,id> *)advertisementData RSSI:(NSNumber *)RSSI {
@@ -125,18 +143,17 @@ static id instance;
     NSLog(@"found peripheral: %@ rssi: %@\nadvertisement: %@ ", peripheral, RSSI, advertisementData);
     [deviceBuffer addObject:peripheral.identifier];
     Class deviceClass = nil;
+    NSDictionary *deviceClassMetadata = nil;
     NSString *advertisementName = advertisementData[CBAdvertisementDataLocalNameKey];
     NSArray *serviceUUIDs = advertisementData[CBAdvertisementDataServiceUUIDsKey];
-    for(NSDictionary *deviceClassMetadata in deviceClasses) {
-        NSString *classAdvertisementName = deviceClassMetadata[@"advertisementName"];
-        if((classAdvertisementName != nil) && (advertisementName != nil) && [advertisementName containsString:classAdvertisementName])  {
-            deviceClass = deviceClassMetadata[@"class"];
-            break;
-        }
-        CBUUID *classMainServiceUUID = deviceClassMetadata[@"mainServiceUUID"];
+    for(NSDictionary *deviceClassItem in deviceClasses) {
+        CBUUID *classMainServiceUUID = deviceClassItem[@"mainServiceUUID"];
         if((classMainServiceUUID != nil) && (serviceUUIDs != nil) && [serviceUUIDs containsObject:classMainServiceUUID]) {
-            deviceClass = deviceClassMetadata[@"class"];
-            break;
+            if([self checkForAdvertisementName:advertisementName withClass:deviceClassItem]) {
+                deviceClass = deviceClassItem[@"class"];
+                deviceClassMetadata = deviceClassItem;
+                break;
+            }
         }
     }
     id device = devices[peripheral.identifier];
@@ -147,7 +164,7 @@ static id instance;
             else
                 deviceClass = [BLEDevice class];
         }
-        device = [[deviceClass alloc] initWithPeripheral: peripheral advertisementData:advertisementData];
+        device = [[deviceClass alloc] initWithPeripheral: peripheral advertisementData:advertisementData classMetadata:deviceClassMetadata];
         NSLog(@"device created for peripheral: %@ of class: %@", peripheral, NSStringFromClass(deviceClass));
         [devices setObject:device forKey:peripheral.identifier];
     }
