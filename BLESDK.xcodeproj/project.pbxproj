@@ -30,6 +30,10 @@
 		E2534C0D1DCB8A4500F61CCF /* BLEDevicesManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = BLEDevicesManager.m; path = BLESDK/BLEDevicesManager.m; sourceTree = SOURCE_ROOT; };
 		E2534C0E1DCB8A4500F61CCF /* BLEDevicesManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BLEDevicesManager.h; path = BLESDK/BLEDevicesManager.h; sourceTree = SOURCE_ROOT; };
 		E29184901DC9B3BB0056278A /* BLESDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = BLESDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2A40D6C2636DD0A000EE4AE /* BLESensor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = BLESensor.h; path = BLESDK/BLESensor.h; sourceTree = SOURCE_ROOT; };
+		E2A40D6D2636DD23000EE4AE /* BLESensor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = BLESensor.m; path = BLESDK/BLESensor.m; sourceTree = SOURCE_ROOT; };
+		E2A40D6E2636DF6E000EE4AE /* BLESensorFeature.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = BLESensorFeature.m; path = BLESDK/BLESensorFeature.m; sourceTree = SOURCE_ROOT; };
+		E2A40D6F2636DF80000EE4AE /* BLESensorFeature.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = BLESensorFeature.h; path = BLESDK/BLESensorFeature.h; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -86,11 +90,23 @@
 			children = (
 				E247DD061DCB839C00F3808F /* Common */,
 				E247DD071DCB83A300F3808F /* BLE */,
+				E2A40D6B2636DBBC000EE4AE /* Sensor */,
 				E247DCFA1DCB838A00F3808F /* Info.plist */,
 				E247DCFB1DCB838A00F3808F /* BLESDK.h */,
 			);
 			name = BLESDK;
 			path = test;
+			sourceTree = "<group>";
+		};
+		E2A40D6B2636DBBC000EE4AE /* Sensor */ = {
+			isa = PBXGroup;
+			children = (
+				E2A40D6C2636DD0A000EE4AE /* BLESensor.h */,
+				E2A40D6D2636DD23000EE4AE /* BLESensor.m */,
+				E2A40D6F2636DF80000EE4AE /* BLESensorFeature.h */,
+				E2A40D6E2636DF6E000EE4AE /* BLESensorFeature.m */,
+			);
+			path = Sensor;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -149,6 +165,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 			);
 			mainGroup = E29184861DC9B3BB0056278A;
