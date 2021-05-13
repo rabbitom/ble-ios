@@ -18,13 +18,30 @@
 
 @implementation BLESensor
 
-- (NSDictionary*)features {
-    return features;
+- (id)initWithPeripheral: (CBPeripheral*)peripheral advertisementData: (NSDictionary*)ad classMetadata: (NSDictionary*)classMetadata {
+    if(self = [super initWithPeripheral:peripheral advertisementData:ad classMetadata:classMetadata]) {
+        NSArray *servicesArray = classMetadata[@"services"];
+        if(servicesArray) {
+            for(NSDictionary *serviceItem in servicesArray) {
+                NSArray *characteristicsArray = serviceItem[@"characteristics"];
+                if(characteristicsArray) {
+                    for(NSDictionary *characteristicItem in characteristicsArray) {
+                        NSString *characteristicName = characteristicItem[@"name"];
+                        if([characteristicItem[@"function"] isEqual: @"feature"]) {
+                            if(features == nil)
+                                features = [NSMutableDictionary dictionary];
+                            features[characteristicName] = [[BLESensorFeature alloc] initWithConfig: characteristicItem];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return self;
 }
 
-- (void)setReady {
-    features = [NSMutableDictionary dictionary];
-    [super setReady];
+- (NSDictionary*)features {
+    return features;
 }
 
 - (void)onReceiveData: (NSData*)data forProperty: (NSString*)propertyName {

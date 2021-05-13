@@ -13,11 +13,15 @@
 
 @interface BLESensorFeature : NSObject
 
-@property NSString* name;
+@property (readonly) NSString* name;
 
-@property BOOL enabled;
+@property BOOL available; //是否存在
+
+@property BOOL enabled; //是否开启通知
 
 @property NSObject* value;
+
+@property (readonly) NSString* valueString;
 
 - (id)initWithConfig: (NSDictionary*)config;
 - (BOOL)parseData: (NSData*)data;
