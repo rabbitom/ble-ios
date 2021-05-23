@@ -12,6 +12,7 @@
 
 @interface BLESensorFeature() {
     NSDictionary* config;
+    NSObject *value;
 }
 @end
 
@@ -25,7 +26,7 @@
 }
 
 - (BOOL)parseData: (NSData*)data {
-    if((self.value = csl_decode(data, 0, config)))
+    if((value = csl_decode(data, 0, config)))
         return YES;
     else
         return NO;
@@ -33,6 +34,18 @@
 
 - (NSString*)name {
     return config[@"name"];
+}
+
+- (int)dimension {
+    return config[@"dimension"] || 1;
+}
+
+- (NSObject*)value {
+    return value;
+}
+
+- (NSString*)unit {
+    return config[@"unit"];
 }
 
 - (NSString*)valueString {

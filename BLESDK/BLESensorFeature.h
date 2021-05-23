@@ -14,12 +14,14 @@
 @interface BLESensorFeature : NSObject
 
 @property (readonly) NSString* name;
+@property (readonly) int dimension;
+@property (readonly) NSString* unit;
 
 @property BOOL available; //是否存在
 
 @property BOOL enabled; //是否开启通知
 
-@property NSObject* value;
+@property (readonly) NSObject* value;
 
 @property (readonly) NSString* valueString;
 
