@@ -23,6 +23,12 @@ id csl_decode_uint16be(NSData* data, int offset) {
     return [NSNumber numberWithUnsignedShort: result];
 }
 
+id csl_decode_float32(NSData* data, int offset) {
+    Byte* bytes = (Byte*)[data bytes];
+    Float32 result = *(Float32*)(bytes + offset);
+    return [NSNumber numberWithFloat:result];
+}
+
 id csl_decode_fixed(NSData* data, int offset, NSDictionary *config) {
     Byte* bytes = (Byte*)[data bytes];
     NSArray *valueArr = config[@"value"];
@@ -39,10 +45,15 @@ id csl_decode_fixed(NSData* data, int offset, NSDictionary *config) {
 
 id csl_decode_scalar(NSData* data, int offset, NSDictionary *config) {
     NSString *format = config[@"format"];
-    if([[format lowercaseString] isEqual: @"uint16be"])
-        return csl_decode_uint16be(data, offset);
-    else if([[format lowercaseString] isEqual: @"int16be"])
-        return csl_decode_int16be(data, offset);
+    if(format) {
+        format = [format lowercaseString];
+        if([format isEqual: @"uint16be"])
+            return csl_decode_uint16be(data, offset);
+        else if([format isEqual: @"int16be"])
+            return csl_decode_int16be(data, offset);
+        else if([format isEqual: @"float32"])
+            return csl_decode_float32(data, offset);
+    }
     return nil;
 }
 
