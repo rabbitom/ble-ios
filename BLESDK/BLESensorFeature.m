@@ -38,7 +38,17 @@
 - (NSString*)valueString {
     if(!self.value)
         return nil;
-    NSString *result = [self.value description];
+    NSString *result;
+    if([@"array" isEqual:config[@"type"]]) {
+        NSArray *array = (NSArray*)self.value;
+        NSMutableArray *valueStringArray = [NSMutableArray array];
+        for (NSNumber *number in array) {
+            [valueStringArray addObject:[number description]];
+        }
+        result = [valueStringArray componentsJoinedByString:@","];
+    }
+    else
+        result = [self.value description];
     NSString *unit = config[@"unit"];
     if(unit)
         result = [NSString stringWithFormat:@"%@ %@", result, unit];
