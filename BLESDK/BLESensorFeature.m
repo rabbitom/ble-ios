@@ -37,7 +37,11 @@
 }
 
 - (int)dimension {
-    return config[@"dimension"] || 1;
+    NSNumber *result = config[@"dimension"];
+    if(result)
+        return [result intValue];
+    else
+        return 1;
 }
 
 - (NSObject*)value {
