@@ -102,4 +102,13 @@ id doConversion(NSObject* src, NSString* operator, id operand) {
     return result;
 }
 
+- (NSArray*) keys {
+    NSArray *fields = config[@"fields"];
+    NSMutableArray *result = [NSMutableArray array];
+    [fields enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [result addObject: ((NSDictionary*)obj)[@"name"]];
+    }];
+    return result;
+}
+
 @end

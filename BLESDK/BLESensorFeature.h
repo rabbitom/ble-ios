@@ -21,6 +21,8 @@
 
 @property BOOL enabled; //是否开启通知
 
+@property (readonly) NSArray* keys;
+
 @property (readonly) NSObject* value;
 
 @property (readonly) NSString* valueString;
