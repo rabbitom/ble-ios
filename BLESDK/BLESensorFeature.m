@@ -25,9 +25,39 @@
     return self;
 }
 
+id doConversion(NSObject* src, NSString* operator, id operand) {
+    if([operator isEqual:@"divide"]) {
+        //if(src.class == NSArray.class) {
+            NSMutableArray *arr = [NSMutableArray array];
+            for(NSNumber* n in (NSArray*)src) {
+                float f = [n floatValue] / [(NSNumber*)operand floatValue];
+                [arr addObject: [NSNumber numberWithFloat:f]];
+            }
+            return arr;
+        //}
+    }
+    return src;
+}
+
 - (BOOL)parseData: (NSData*)data {
-    if((value = csl_decode(data, 0, config)))
+    if((value = csl_decode(data, 0, config))) {
+        NSArray *conversions = config[@"conversions"];
+        if(conversions) {
+            for(NSDictionary *conversion in conversions) {
+                NSArray* operandValue = conversion[@"value"];
+                int operandValueLength = (int)[operandValue count];
+                Byte operandBytes[operandValueLength];
+                for(int i=0; i<operandValueLength; i++) {
+                    NSNumber *iNumber = operandValue[i];
+                    operandBytes[i] = [iNumber unsignedCharValue];
+                }
+                NSData* operandData = [NSData dataWithBytes:operandBytes length:operandValueLength];
+                id operand = csl_decode(operandData, 0, conversion);
+                value = doConversion(value, conversion[@"operator"], operand);
+            }
+        }
         return YES;
+    }
     else
         return NO;
 }
