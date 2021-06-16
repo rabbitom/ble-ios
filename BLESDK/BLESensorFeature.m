@@ -14,6 +14,7 @@
     NSDictionary* config;
     NSObject *value;
 }
+- (NSString*)configString: (NSString*)key;
 @end
 
 @implementation BLESensorFeature
@@ -63,7 +64,7 @@ id doConversion(NSObject* src, NSString* operator, id operand) {
 }
 
 - (NSString*)name {
-    return config[@"name"];
+    return [self configString: @"name"];
 }
 
 - (int)dimension {
@@ -78,13 +79,22 @@ id doConversion(NSObject* src, NSString* operator, id operand) {
     return value;
 }
 
+- (NSString*)configString: (NSString*)key {
+    NSString *result = config[key];
+    return result ? result : @"";
+}
+
 - (NSString*)unit {
-    return config[@"unit"];
+    return [self configString: @"unit"];
+}
+
+- (NSString*)description {
+    return [self configString: @"description"];
 }
 
 - (NSString*)valueString {
     if(!self.value)
-        return nil;
+        return @"";
     NSString *result;
     if([@"array" isEqual:config[@"type"]]) {
         NSArray *array = (NSArray*)self.value;
