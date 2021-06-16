@@ -23,9 +23,31 @@ id csl_decode_uint16be(NSData* data, int offset) {
     return [NSNumber numberWithUnsignedShort: result];
 }
 
+id csl_decode_uint32be(NSData* data, int offset) {
+    Byte* bytes = (Byte*)[data bytes];
+    UInt32 result = 0;
+    result = (bytes[offset] << 24) | (bytes[offset + 1] << 16) | (bytes[offset + 2] << 8) | bytes[offset + 3];
+    return [NSNumber numberWithUnsignedInt: result];
+}
+
+id csl_decode_uint32le(NSData* data, int offset) {
+    Byte* bytes = (Byte*)[data bytes];
+    UInt32 result = 0;
+    result = bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 24);
+    return [NSNumber numberWithUnsignedInt: result];
+}
+
 id csl_decode_float32(NSData* data, int offset) {
     Byte* bytes = (Byte*)[data bytes];
     Float32 result = *(Float32*)(bytes + offset);
+    return [NSNumber numberWithFloat:result];
+}
+
+id csl_decode_t16(NSData* data, int offset) {
+    Byte* bytes = (Byte*)[data bytes];
+    SInt8 digit = ((SInt8*)bytes)[offset];
+    UInt8 remainder = bytes[offset+1];
+    Float32 result = (Float32)digit + (Float32)remainder / 100;
     return [NSNumber numberWithFloat:result];
 }
 
@@ -51,8 +73,14 @@ id csl_decode_scalar(NSData* data, int offset, NSDictionary *config) {
             return csl_decode_uint16be(data, offset);
         else if([format isEqual: @"int16be"])
             return csl_decode_int16be(data, offset);
+        else if([format isEqual: @"uint32be"])
+            return csl_decode_uint32be(data, offset);
+        else if([format isEqual: @"uint32le"])
+            return csl_decode_uint32le(data, offset);
         else if([format isEqual: @"float32"])
             return csl_decode_float32(data, offset);
+        else if([format isEqual: @"t16"])
+            return csl_decode_t16(data, offset);
     }
     return nil;
 }
