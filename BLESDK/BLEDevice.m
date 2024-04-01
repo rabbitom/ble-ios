@@ -9,17 +9,14 @@
 #import "BLEDevice.h"
 #import "BLEDevicesManager.h"
 #import "CoolUtility.h"
+#import "CSL.h"
 
 @interface BLEDevice()
-{
-    NSMutableDictionary *advertisementData;
-    
+{    
     NSMutableArray *servicesOnDiscoveringCharacteristics;
 
     NSMutableDictionary *characteristicNamesByUUID;
     NSMutableDictionary *characteristicsByName;
-    
-    NSDictionary *metadata;
 }
 
 @end
@@ -32,11 +29,11 @@
         _peripheral = peripheral;
         _peripheral.delegate = self;
         advertisementData = [NSMutableDictionary dictionaryWithDictionary:ad];
-        metadata = classMetadata;
         servicesOnDiscoveringCharacteristics = [NSMutableArray array];
         characteristicNamesByUUID = [NSMutableDictionary dictionary];
         characteristicsByName = [NSMutableDictionary dictionary];
         if(classMetadata) {
+            metadata = classMetadata;
             NSArray *servicesArray = classMetadata[@"services"];
             for(NSDictionary *serviceItem in servicesArray) {
                 NSArray *characteristicsArray = serviceItem[@"characteristics"];
@@ -46,14 +43,32 @@
                     [characteristicNamesByUUID setObject:characteristicName forKey:[CBUUID UUIDWithString:characteristicUuid]];
                 }
             }
+            [self updateServiceData];
         }
     }
     return self;
 }
 
+- (void)updateServiceData {
+    NSDictionary *serviceDataConfig = [metadata valueForKeyPath:@"advertisements.serviceData"];
+    if(serviceDataConfig) {
+        CBUUID *UUID = [CBUUID UUIDWithString:serviceDataConfig[@"uuid"]];
+        NSDictionary *serviceDataDict = advertisementData[CBAdvertisementDataServiceDataKey];
+        if(serviceDataDict) {
+            NSData *serviceDataData = serviceDataDict[UUID];
+            if(serviceDataData) {
+                int serviceDataLength = 0;
+                serviceData = csl_decode(serviceDataData, 0, serviceDataConfig, &serviceDataLength);
+            }
+        }
+    }
+}
+
 - (void)updateAdvertisementData: (NSDictionary*)ad {
     for(id key in ad.allKeys)
         [advertisementData setObject:ad[key] forKey:key];
+    [self updateServiceData];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"BLEDevice.AdvUpdated" object:self];
 }
 
 - (NSDictionary*)advertisementData {
@@ -62,6 +77,10 @@
 
 - (NSString*)deviceKey {
     return [self.peripheral.identifier UUIDString];
+}
+
+- (NSString*)deviceDesc {
+    return [self deviceKey];
 }
 
 - (NSString*)deviceNameByDefault: (NSString*)defaultName {

@@ -10,12 +10,17 @@
 #import <CoreBluetooth/CoreBluetooth.h>
 
 @interface BLEDevice : NSObject <CBPeripheralDelegate>
-
+{
+    NSMutableDictionary *advertisementData;
+    NSDictionary *metadata;
+    NSDictionary *serviceData;
+}
 @property CBPeripheral *peripheral;
 @property (readonly) NSDictionary *advertisementData;
 
 @property (readonly) NSString *deviceKey;
 @property int rssi;
+@property (readonly) NSString *deviceDesc;
 
 - (NSString*) deviceNameByDefault: (NSString*)defaultName;
 
@@ -23,6 +28,7 @@
 
 - (id)initWithPeripheral: (CBPeripheral*)peripheral advertisementData: (NSDictionary*)ad classMetadata: (NSDictionary*)classMetadata;
 - (void)updateAdvertisementData: (NSDictionary*)ad;
+- (void)updateServiceData;
 
 - (void)connect;
 - (void)disconnect;
