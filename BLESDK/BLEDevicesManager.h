@@ -17,8 +17,9 @@
 - (void)addDeviceClassFromFile: (NSString*)filePath;
 - (void)addDeviceClass: (NSDictionary*)metadata;
 
-- (void)searchDevices;
-- (void)stopSearching;
+@property (readonly) BOOL isScanning;
+- (void)startScan;
+- (void)stopScan;
 //- (NSArray*)devicesOfClass: (NSString*)className sortBy: (NSString*)key max: (int)count;
 
 - (id)findDevice: (NSUUID*)deviceId;

@@ -42,6 +42,7 @@ static id instance;
         centralManager = [[CBCentralManager alloc] initWithDelegate:self queue:nil options:@{CBCentralManagerOptionShowPowerAlertKey: @YES}];
         deviceClasses = [NSMutableArray array];
         devices = [NSMutableDictionary dictionary];
+        _isScanning = NO;
     }
     return self;
 }
@@ -64,16 +65,18 @@ static id instance;
     }
 }
 
-- (void)searchDevices {
+- (void)startScan {
     if(deviceBuffer == nil)
         deviceBuffer = [NSMutableArray array];
     else
         [deviceBuffer removeAllObjects];
     [centralManager scanForPeripheralsWithServices:nil options:nil];
+    _isScanning = YES;
 }
 
-- (void)stopSearching {
+- (void)stopScan {
     [centralManager stopScan];
+    _isScanning = NO;
 }
 
 - (void)addDeviceClass: (NSDictionary*)metadata {
