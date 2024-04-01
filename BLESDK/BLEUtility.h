@@ -8,11 +8,12 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreBluetooth/CoreBluetooth.h>
+#import <CoreBluetooth/CBManager.h>
 
 @interface BLEUtility : NSObject
 
 + (NSString*)serviceName: (CBUUID*)serviceUUID;
 
-+ (NSString*)centralState:(CBCentralManagerState)state;
++ (NSString*)centralState:(CBManagerState)state;
 
 @end

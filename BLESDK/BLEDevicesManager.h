@@ -14,7 +14,8 @@
 + (instancetype)sharedInstance;
 + (CBCentralManager*)central;
 
-- (void)addSearchFilter: (NSString*)filePath;
+- (void)addDeviceClassFromFile: (NSString*)filePath;
+- (void)addDeviceClass: (NSDictionary*)metadata;
 
 - (void)searchDevices;
 - (void)stopSearching;
@@ -22,7 +23,6 @@
 
 - (id)findDevice: (NSUUID*)deviceId;
 
-@property BOOL filterSearchByMainServices;
 @property BOOL filterDeviceOfUnknownClass;
 
 @end

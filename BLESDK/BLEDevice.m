@@ -13,13 +13,13 @@
 @interface BLEDevice()
 {
     NSMutableDictionary *advertisementData;
-    NSMutableArray *advertisements;
-
-    NSMutableArray *servicesOnDiscover;//peripheral services to discover characteristics
-    NSMutableArray *characteristicUUIDsToDiscover;
     
-    NSMutableDictionary *servicesDict;
-    NSMutableDictionary *characteristicsDict;
+    NSMutableArray *servicesOnDiscoveringCharacteristics;
+
+    NSMutableDictionary *characteristicNamesByUUID;
+    NSMutableDictionary *characteristicsByName;
+    
+    NSDictionary *metadata;
 }
 
 @end
@@ -32,22 +32,18 @@
         _peripheral = peripheral;
         _peripheral.delegate = self;
         advertisementData = [NSMutableDictionary dictionaryWithDictionary:ad];
-        [self parseAdvertisementData];
-        propertyCharacteristics = [NSMutableDictionary dictionary];
-        servicesOnDiscover = [NSMutableArray array];
+        metadata = classMetadata;
+        servicesOnDiscoveringCharacteristics = [NSMutableArray array];
+        characteristicNamesByUUID = [NSMutableDictionary dictionary];
+        characteristicsByName = [NSMutableDictionary dictionary];
         if(classMetadata) {
-            servicesDict = [NSMutableDictionary dictionary];
-            characteristicsDict = [NSMutableDictionary dictionary];
             NSArray *servicesArray = classMetadata[@"services"];
             for(NSDictionary *serviceItem in servicesArray) {
-                NSString *uuid = serviceItem[@"uuid"];
-                NSString *name = serviceItem[@"name"];
-                [servicesDict setObject:name forKey:[CBUUID UUIDWithString:uuid]];
                 NSArray *characteristicsArray = serviceItem[@"characteristics"];
                 for(NSDictionary *characteristicItem in characteristicsArray) {
                     NSString *characteristicUuid = characteristicItem[@"uuid"];
                     NSString *characteristicName = characteristicItem[@"name"];
-                    [characteristicsDict setObject:characteristicName forKey:[CBUUID UUIDWithString:characteristicUuid]];
+                    [characteristicNamesByUUID setObject:characteristicName forKey:[CBUUID UUIDWithString:characteristicUuid]];
                 }
             }
         }
@@ -55,40 +51,17 @@
     return self;
 }
 
-- (NSArray*)advertisements {
-    return advertisements;
-}
-
-- (void)parseAdvertisementData {
-    if(advertisements == nil)
-        advertisements = [NSMutableArray array];
-    else
-        [advertisements removeAllObjects];
-    for(NSString *key in advertisementData.allKeys) {
-        NSObject *value = advertisementData[key];
-        //NSLog(@"advertisement key = %@, value class is %@", key, NSStringFromClass(value.class));
-        NSString *k = [key hasPrefix:@"kCBAdvData"] ? [key substringFromIndex:10] : key;
-        if([value conformsToProtocol:@protocol(NSFastEnumeration)]) {
-            for(NSObject *v in (id<NSFastEnumeration>)value)
-                [advertisements addObject:@{@"key":k, @"value":[NSString stringWithFormat:@"%@", v]}];
-        }
-        else
-            [advertisements addObject:@{@"key":k, @"value":[NSString stringWithFormat:@"%@", value]}];
-    }
-}
-
 - (void)updateAdvertisementData: (NSDictionary*)ad {
     for(id key in ad.allKeys)
         [advertisementData setObject:ad[key] forKey:key];
-    [self parseAdvertisementData];
+}
+
+- (NSDictionary*)advertisementData {
+    return advertisementData;
 }
 
 - (NSString*)deviceKey {
     return [self.peripheral.identifier UUIDString];
-}
-
-- (int)deviceRSSI {
-    return [self.peripheral.RSSI intValue];
 }
 
 - (NSString*)deviceNameByDefault: (NSString*)defaultName {
@@ -98,40 +71,20 @@
     return STRING_BY_DEFAULT(deviceName, defaultName);
 }
 
-+ (NSDictionary *)defaultServices {
-    return nil;
-}
-
-+ (NSDictionary *)defaultCharacteristics {
-    return nil;
-}
-
-- (NSDictionary *)services {
-    if(servicesDict != nil)
-        return servicesDict;
-    else
-        return [self.class defaultServices];
-}
-
-- (NSDictionary *)characteristics {
-    if(characteristicsDict != nil)
-        return characteristicsDict;
-    else
-        return [self.class defaultCharacteristics];
-}
-
 - (void)onConnected {
     if(self.peripheral.services == nil) {
-        [servicesOnDiscover removeAllObjects];
-        NSDictionary *characteristics = [self characteristics];
-        if(characteristics != nil)
-            characteristicUUIDsToDiscover = [NSMutableArray arrayWithArray:characteristics.allKeys];
-        else
-            characteristicUUIDsToDiscover = nil;
-        [self.peripheral discoverServices:nil];
+        NSMutableArray *serviceUUIDsToDiscover;
+        if(metadata != nil) {
+            NSArray *services = metadata[@"services"];
+            if(services) {
+                for(NSDictionary *service in services)
+                    [serviceUUIDsToDiscover addObject:[CBUUID UUIDWithString:service[@"uuid"]]];
+            }
+        }
+        [self.peripheral discoverServices:serviceUUIDsToDiscover];
     }
     else {
-        NSLog(@"already discovered services: %@", self.peripheral.services);
+        NSLog(@"peripheral already has services: %@", self.peripheral.services);
         [self setReady];
     }
 }
@@ -171,7 +124,7 @@
 }
 
 - (void)writeData: (NSData*)data forProperty: (NSString*)propertyName {
-    CBCharacteristic *characteristic = propertyCharacteristics[propertyName];
+    CBCharacteristic *characteristic = characteristicsByName[propertyName];
     if(characteristic != nil) {
         if(characteristic.properties & CBCharacteristicPropertyWrite)
             [self.peripheral writeValue:data forCharacteristic:characteristic type:CBCharacteristicWriteWithResponse];
@@ -181,29 +134,35 @@
             NSLog(@"characteristic cannot be written");
     }
     else
-        NSLog(@"property has no charactristic");
+        NSLog(@"charactristic not found of name %@", propertyName);
 }
 
 - (void)readData:(NSString *)propertyName {
-    CBCharacteristic *characteristic = propertyCharacteristics[propertyName];
+    CBCharacteristic *characteristic = characteristicsByName[propertyName];
     if(characteristic != nil)
         [self.peripheral readValueForCharacteristic:characteristic];
+    else
+        NSLog(@"charactristic not found of name %@", propertyName);
 }
 
 - (void)startReceiveData: (NSString*)propertyName {
-    CBCharacteristic *characteristic = propertyCharacteristics[propertyName];
+    CBCharacteristic *characteristic = characteristicsByName[propertyName];
     if(characteristic != nil)
         [self.peripheral setNotifyValue:YES forCharacteristic:characteristic];
+    else
+        NSLog(@"charactristic not found of name %@", propertyName);
 }
 
 - (void)stopReceiveData: (NSString*)propertyName {
-    CBCharacteristic *characteristic = propertyCharacteristics[propertyName];
+    CBCharacteristic *characteristic = characteristicsByName[propertyName];
     if(characteristic != nil)
         [self.peripheral setNotifyValue:NO forCharacteristic:characteristic];
+    else
+        NSLog(@"charactristic not found of name %@", propertyName);
 }
 
 - (BOOL)isReceivingData: (NSString*)propertyName {
-    CBCharacteristic *characteristic = propertyCharacteristics[propertyName];
+    CBCharacteristic *characteristic = characteristicsByName[propertyName];
     if(characteristic != nil)
         return characteristic.isNotifying;
     else
@@ -219,7 +178,8 @@
         NSLog(@"CBPeripheral discover services error: %@", error);
         return;
     }
-    [servicesOnDiscover addObjectsFromArray:peripheral.services];
+    [servicesOnDiscoveringCharacteristics removeAllObjects];
+    [servicesOnDiscoveringCharacteristics addObjectsFromArray:peripheral.services];
     for(CBService *service in [peripheral services])
         //发现特性
         [peripheral discoverCharacteristics:nil forService:service];
@@ -232,19 +192,15 @@
         NSLog(@"CBPeripheral discover characteristics of service %@ error: %@", service, error);
         return;
     }
-    [servicesOnDiscover removeObject:service];
-    if((characteristicUUIDsToDiscover != nil) && (characteristicUUIDsToDiscover.count > 0))
-        for(CBCharacteristic *characteristic in [service characteristics])
-        {
-            CBUUID *characteristicUUID = characteristic.UUID;
-            if([characteristicUUIDsToDiscover containsObject:characteristicUUID]) {
-                NSString *propertyName = [self characteristics][characteristicUUID];
-                [propertyCharacteristics setObject:characteristic forKey:propertyName];
-                [characteristicUUIDsToDiscover removeObject:characteristicUUID];
-                NSLog(@"found characteristic for property: %@", propertyName);
-            }
-        }
-    if(servicesOnDiscover.count == 0)
+    [servicesOnDiscoveringCharacteristics removeObject:service];
+    for(CBCharacteristic *characteristic in [service characteristics])
+    {
+        CBUUID *characteristicUUID = characteristic.UUID;
+        NSString *characteristicName = characteristicNamesByUUID[characteristicUUID];
+        if(characteristicName != nil)
+            [characteristicsByName setObject:characteristic forKey:characteristicName];
+    }
+    if(servicesOnDiscoveringCharacteristics.count == 0)
         [self setReady];
 }
 
@@ -255,14 +211,13 @@
         NSLog(@"CBPeripheral update value of characteristic %@ error: %@", characteristic, error);
         return;
     }
-    NSString *propertyName = [[self characteristics] objectForKey:characteristic.UUID];
+    NSString *propertyName = characteristicNamesByUUID[characteristic.UUID];
     if(propertyName != nil) {
         [self onReceiveData:characteristic.value forProperty:propertyName];
-        NSLog(@"data for %@ = %@", propertyName, characteristic.value);
+        NSLog(@"updated value of %@: %@", propertyName, characteristic.value);
     }
-    else {
-        NSLog(@"value for %@ = %@", characteristic.UUID, characteristic.value);
-    }
+    else
+        NSLog(@"updated value of %@: %@", characteristic.UUID, characteristic.value);
 }
 
 -(void)peripheral:(CBPeripheral *)peripheral didWriteValueForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error

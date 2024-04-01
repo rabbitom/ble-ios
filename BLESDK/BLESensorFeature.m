@@ -41,7 +41,7 @@ id doConversion(NSObject* src, NSString* operator, id operand) {
 }
 
 - (BOOL)parseData: (NSData*)data {
-    if((value = csl_decode(data, 0, config))) {
+    if((value = csl_decode(data, 0, config, nil))) {
         NSArray *conversions = config[@"conversions"];
         if(conversions) {
             for(NSDictionary *conversion in conversions) {
@@ -53,7 +53,7 @@ id doConversion(NSObject* src, NSString* operator, id operand) {
                     operandBytes[i] = [iNumber unsignedCharValue];
                 }
                 NSData* operandData = [NSData dataWithBytes:operandBytes length:operandValueLength];
-                id operand = csl_decode(operandData, 0, conversion);
+                id operand = csl_decode(operandData, 0, conversion, nil);
                 value = doConversion(value, conversion[@"operator"], operand);
             }
         }

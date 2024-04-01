@@ -9,6 +9,10 @@
 #ifndef CSL_h
 #define CSL_h
 
-id csl_decode(NSData *data, int offset, NSDictionary *config);
+id csl_decode(NSData *data, int offset, NSDictionary *config, int *length);
+
+NSData *csl_parse_hex_str(NSString* str);
+
+NSData* csl_encode(id value, NSDictionary *config);
 
 #endif /* CSL_h */

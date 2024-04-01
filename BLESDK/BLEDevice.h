@@ -10,17 +10,9 @@
 #import <CoreBluetooth/CoreBluetooth.h>
 
 @interface BLEDevice : NSObject <CBPeripheralDelegate>
-{
-    NSMutableDictionary *propertyCharacteristics;
-}
-
-+ (NSDictionary*) defaultServices;//ServiceUUID(CBUUID) : serviceName(String)
-+ (NSDictionary*) defaultCharacteristics;//CharateristicUUID(CBUUID) : propertyName(String)
-- (NSDictionary*) services;
-- (NSDictionary*) characteristics;
 
 @property CBPeripheral *peripheral;
-@property (readonly) NSArray *advertisements;
+@property (readonly) NSDictionary *advertisementData;
 
 @property (readonly) NSString *deviceKey;
 @property int rssi;
