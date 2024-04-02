@@ -19,9 +19,8 @@
 - (id)initWithConfig: (NSDictionary*)_config switchable:(BOOL)isSwitchable{
     if(self = [super init]) {
         config = _config;
-        _settings = [NSMutableDictionary dictionary];
-        _status = [NSMutableDictionary dictionary];
         _switchable = isSwitchable;
+        _state = [NSMutableDictionary dictionary];
     }
     return self;
 }

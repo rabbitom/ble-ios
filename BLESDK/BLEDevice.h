@@ -14,35 +14,36 @@
     NSMutableDictionary *advertisementData;
     NSDictionary *metadata;
     NSDictionary *serviceData;
+    NSMutableDictionary *state;
 }
 @property CBPeripheral *peripheral;
 @property (readonly) NSDictionary *advertisementData;
 
 @property (readonly) NSString *deviceKey;
-@property (readonly) NSString *deviceInfo;
 @property (readonly) NSString *deviceName;
+@property (readonly) NSString *deviceDesc;
 @property int rssi;
 
 @property (readonly) BOOL isConnected;
 
+@property (readonly) NSMutableDictionary *state;
+
 - (id)initWithPeripheral: (CBPeripheral*)peripheral advertisementData: (NSDictionary*)ad classMetadata: (NSDictionary*)classMetadata;
 - (void)updateAdvertisementData: (NSDictionary*)ad;
-- (void)updateServiceData;
 
 - (void)connect;
 - (void)disconnect;
-
 - (void)onConnected;
-- (void)onReceiveData: (NSData*)data forProperty: (NSString*)propertyName;
-- (void)onValueChanged: (id)value ofProperty: (NSString*)propertyName;
+- (void)onReady;
 
-- (void)writeData: (NSData*)data forProperty: (NSString*)propertyName;
+- (void)writeData: (NSData*)data to: (NSString*)characteristicName;
+- (void)readData: (NSString*)characteristicName;
+- (void)startReceivingData: (NSString*)characteristicName;
+- (void)stopReceivingData: (NSString*)characteristicName;
+- (BOOL)isReceivingData: (NSString*)characteristicName;
+- (void)onReceivedData: (NSData*)data from: (NSString*)characteristicName;
 
-- (void)setReady;
-
-- (void)readData: (NSString*)propertyName;
-- (void)startReceiveData: (NSString*)propertyName;
-- (void)stopReceiveData: (NSString*)propertyName;
-- (BOOL)isReceivingData: (NSString*)propertyName;
+- (void)callFeature: (NSString*)name withValue: (id)value;
+- (void)onValueUpdated: (id)value ofFeature: (NSString*)name;
 
 @end

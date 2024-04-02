@@ -21,8 +21,7 @@
 @property (readonly) NSString* unit;
 @property (readonly) NSArray* attributes;
 
-@property (readonly) NSMutableDictionary* settings;
-@property (readonly) NSMutableDictionary* status;
+@property (readonly) NSMutableDictionary* state;
 
 @property id value;
 @property (readonly) NSString* valueString;
