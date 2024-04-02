@@ -6,12 +6,11 @@
 //  Copyright © 2016年 CoolTools. All rights reserved.
 //
 
-#import "BLEDevicesManager.h"
+#import "BLEManager.h"
 #import "BLEDevice.h"
 #import "BLEUtility.h"
-#import "CoolUtility.h"
 
-@implementation BLEDevicesManager
+@implementation BLEManager
 {
     CBCentralManager *centralManager;
     NSMutableArray *deviceClasses;//class{mainService/advertisementName}

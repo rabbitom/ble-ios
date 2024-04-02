@@ -7,8 +7,7 @@
 //
 
 #import "BLEDevice.h"
-#import "BLEDevicesManager.h"
-#import "CoolUtility.h"
+#import "BLEManager.h"
 #import "CSL.h"
 
 @interface BLEDevice()
@@ -79,15 +78,12 @@
     return [self.peripheral.identifier UUIDString];
 }
 
-- (NSString*)deviceDesc {
-    return [self deviceKey];
+- (NSString*)deviceInfo {
+    return [advertisementData description];
 }
 
-- (NSString*)deviceNameByDefault: (NSString*)defaultName {
-    NSString *deviceName = advertisementData[CBAdvertisementDataLocalNameKey];
-    if(deviceName == nil)
-        deviceName = self.peripheral.name;
-    return STRING_BY_DEFAULT(deviceName, defaultName);
+- (NSString*)deviceName {
+    return advertisementData[CBAdvertisementDataLocalNameKey];
 }
 
 - (void)onConnected {
@@ -121,7 +117,7 @@
 }
 
 - (void)connect {
-    CBCentralManager *central = [BLEDevicesManager central];
+    CBCentralManager *central = [BLEManager central];
     if(self.peripheral.state != CBPeripheralStateConnected) {
         if(central.state == CBCentralManagerStatePoweredOn)
             [central connectPeripheral:self.peripheral options:nil];
@@ -139,7 +135,7 @@
 }
 
 - (void)disconnect {
-    [[BLEDevicesManager central] cancelPeripheralConnection:self.peripheral];
+    [[BLEManager central] cancelPeripheralConnection:self.peripheral];
 }
 
 - (void)writeData: (NSData*)data forProperty: (NSString*)propertyName {

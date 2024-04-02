@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 #import <CoreBluetooth/CoreBluetooth.h>
 
-@interface BLEDevicesManager : NSObject <CBCentralManagerDelegate>
+@interface BLEManager : NSObject <CBCentralManagerDelegate>
 
 + (instancetype)sharedInstance;
 + (CBCentralManager*)central;

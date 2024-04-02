@@ -19,10 +19,9 @@
 @property (readonly) NSDictionary *advertisementData;
 
 @property (readonly) NSString *deviceKey;
+@property (readonly) NSString *deviceInfo;
+@property (readonly) NSString *deviceName;
 @property int rssi;
-@property (readonly) NSString *deviceDesc;
-
-- (NSString*) deviceNameByDefault: (NSString*)defaultName;
 
 @property (readonly) BOOL isConnected;
 

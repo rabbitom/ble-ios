@@ -7,23 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E24579AF2BBBED7600485A30 /* BLESensorDevice.h in Headers */ = {isa = PBXBuildFile; fileRef = E24579AE2BBBED7600485A30 /* BLESensorDevice.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		E247DCFC1DCB838A00F3808F /* BLEDevice.h in Headers */ = {isa = PBXBuildFile; fileRef = E247DCF21DCB838A00F3808F /* BLEDevice.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		E247DCFD1DCB838A00F3808F /* BLEDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = E247DCF31DCB838A00F3808F /* BLEDevice.m */; };
 		E247DD001DCB838A00F3808F /* BLEUtility.h in Headers */ = {isa = PBXBuildFile; fileRef = E247DCF61DCB838A00F3808F /* BLEUtility.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		E247DD011DCB838A00F3808F /* BLEUtility.m in Sources */ = {isa = PBXBuildFile; fileRef = E247DCF71DCB838A00F3808F /* BLEUtility.m */; };
-		E247DD021DCB838A00F3808F /* CoolUtility.h in Headers */ = {isa = PBXBuildFile; fileRef = E247DCF81DCB838A00F3808F /* CoolUtility.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		E247DD031DCB838A00F3808F /* CoolUtility.m in Sources */ = {isa = PBXBuildFile; fileRef = E247DCF91DCB838A00F3808F /* CoolUtility.m */; };
 		E247DD051DCB838A00F3808F /* BLESDK.h in Headers */ = {isa = PBXBuildFile; fileRef = E247DCFB1DCB838A00F3808F /* BLESDK.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		E2534C0F1DCB8A4500F61CCF /* BLEDevicesManager.m in Sources */ = {isa = PBXBuildFile; fileRef = E2534C0D1DCB8A4500F61CCF /* BLEDevicesManager.m */; };
-		E2534C101DCB8A4500F61CCF /* BLEDevicesManager.h in Headers */ = {isa = PBXBuildFile; fileRef = E2534C0E1DCB8A4500F61CCF /* BLEDevicesManager.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		E2534C0F1DCB8A4500F61CCF /* BLEManager.m in Sources */ = {isa = PBXBuildFile; fileRef = E2534C0D1DCB8A4500F61CCF /* BLEManager.m */; };
+		E2534C101DCB8A4500F61CCF /* BLEManager.h in Headers */ = {isa = PBXBuildFile; fileRef = E2534C0E1DCB8A4500F61CCF /* BLEManager.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		E271B31A264CB4B200A8E7B4 /* BLESDKTests.m in Sources */ = {isa = PBXBuildFile; fileRef = E271B319264CB4B200A8E7B4 /* BLESDKTests.m */; };
 		E271B31C264CB4B200A8E7B4 /* BLESDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E29184901DC9B3BB0056278A /* BLESDK.framework */; };
 		E2E1B9EE263BFFF20096536F /* CSL.h in Headers */ = {isa = PBXBuildFile; fileRef = E283FAE8263A8EE2007354B7 /* CSL.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		E2E1B9EF263BFFF20096536F /* BLESensor.h in Headers */ = {isa = PBXBuildFile; fileRef = E2A40D6C2636DD0A000EE4AE /* BLESensor.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		E2E1B9F0263BFFF20096536F /* BLESensorFeature.h in Headers */ = {isa = PBXBuildFile; fileRef = E2A40D6F2636DF80000EE4AE /* BLESensorFeature.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		E2E1B9F0263BFFF20096536F /* BLESensor.h in Headers */ = {isa = PBXBuildFile; fileRef = E2A40D6F2636DF80000EE4AE /* BLESensor.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		E2E1B9F2263C000F0096536F /* CSL.m in Sources */ = {isa = PBXBuildFile; fileRef = E283FAEA263A8F06007354B7 /* CSL.m */; };
-		E2E1B9F3263C000F0096536F /* BLESensor.m in Sources */ = {isa = PBXBuildFile; fileRef = E2A40D6D2636DD23000EE4AE /* BLESensor.m */; };
-		E2E1B9F4263C000F0096536F /* BLESensorFeature.m in Sources */ = {isa = PBXBuildFile; fileRef = E2A40D6E2636DF6E000EE4AE /* BLESensorFeature.m */; };
+		E2E1B9F4263C000F0096536F /* BLESensor.m in Sources */ = {isa = PBXBuildFile; fileRef = E2A40D6E2636DF6E000EE4AE /* BLESensor.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -37,26 +34,23 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		E24579AE2BBBED7600485A30 /* BLESensorDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = BLESensorDevice.h; path = BLESDK/BLESensorDevice.h; sourceTree = SOURCE_ROOT; };
 		E247DCF21DCB838A00F3808F /* BLEDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BLEDevice.h; path = BLESDK/BLEDevice.h; sourceTree = SOURCE_ROOT; };
 		E247DCF31DCB838A00F3808F /* BLEDevice.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = BLEDevice.m; path = BLESDK/BLEDevice.m; sourceTree = SOURCE_ROOT; };
 		E247DCF61DCB838A00F3808F /* BLEUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BLEUtility.h; path = BLESDK/BLEUtility.h; sourceTree = SOURCE_ROOT; };
 		E247DCF71DCB838A00F3808F /* BLEUtility.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = BLEUtility.m; path = BLESDK/BLEUtility.m; sourceTree = SOURCE_ROOT; };
-		E247DCF81DCB838A00F3808F /* CoolUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CoolUtility.h; path = BLESDK/CoolUtility.h; sourceTree = SOURCE_ROOT; };
-		E247DCF91DCB838A00F3808F /* CoolUtility.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CoolUtility.m; path = BLESDK/CoolUtility.m; sourceTree = SOURCE_ROOT; };
 		E247DCFA1DCB838A00F3808F /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = BLESDK/Info.plist; sourceTree = SOURCE_ROOT; };
 		E247DCFB1DCB838A00F3808F /* BLESDK.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BLESDK.h; path = BLESDK/BLESDK.h; sourceTree = SOURCE_ROOT; };
-		E2534C0D1DCB8A4500F61CCF /* BLEDevicesManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = BLEDevicesManager.m; path = BLESDK/BLEDevicesManager.m; sourceTree = SOURCE_ROOT; };
-		E2534C0E1DCB8A4500F61CCF /* BLEDevicesManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BLEDevicesManager.h; path = BLESDK/BLEDevicesManager.h; sourceTree = SOURCE_ROOT; };
+		E2534C0D1DCB8A4500F61CCF /* BLEManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = BLEManager.m; path = BLESDK/BLEManager.m; sourceTree = SOURCE_ROOT; };
+		E2534C0E1DCB8A4500F61CCF /* BLEManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BLEManager.h; path = BLESDK/BLEManager.h; sourceTree = SOURCE_ROOT; };
 		E271B317264CB4B200A8E7B4 /* BLESDKTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BLESDKTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E271B319264CB4B200A8E7B4 /* BLESDKTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BLESDKTests.m; sourceTree = "<group>"; };
 		E271B31B264CB4B200A8E7B4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E283FAE8263A8EE2007354B7 /* CSL.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CSL.h; path = BLESDK/CSL.h; sourceTree = SOURCE_ROOT; };
 		E283FAEA263A8F06007354B7 /* CSL.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = CSL.m; path = BLESDK/CSL.m; sourceTree = SOURCE_ROOT; };
 		E29184901DC9B3BB0056278A /* BLESDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = BLESDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		E2A40D6C2636DD0A000EE4AE /* BLESensor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = BLESensor.h; path = BLESDK/BLESensor.h; sourceTree = SOURCE_ROOT; };
-		E2A40D6D2636DD23000EE4AE /* BLESensor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = BLESensor.m; path = BLESDK/BLESensor.m; sourceTree = SOURCE_ROOT; };
-		E2A40D6E2636DF6E000EE4AE /* BLESensorFeature.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = BLESensorFeature.m; path = BLESDK/BLESensorFeature.m; sourceTree = SOURCE_ROOT; };
-		E2A40D6F2636DF80000EE4AE /* BLESensorFeature.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = BLESensorFeature.h; path = BLESDK/BLESensorFeature.h; sourceTree = SOURCE_ROOT; };
+		E2A40D6E2636DF6E000EE4AE /* BLESensor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = BLESensor.m; path = BLESDK/BLESensor.m; sourceTree = SOURCE_ROOT; };
+		E2A40D6F2636DF80000EE4AE /* BLESensor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = BLESensor.h; path = BLESDK/BLESensor.h; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -78,15 +72,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		E247DD061DCB839C00F3808F /* Common */ = {
-			isa = PBXGroup;
-			children = (
-				E247DCF81DCB838A00F3808F /* CoolUtility.h */,
-				E247DCF91DCB838A00F3808F /* CoolUtility.m */,
-			);
-			name = Common;
-			sourceTree = "<group>";
-		};
 		E247DD071DCB83A300F3808F /* BLE */ = {
 			isa = PBXGroup;
 			children = (
@@ -94,8 +79,8 @@
 				E247DCF71DCB838A00F3808F /* BLEUtility.m */,
 				E247DCF21DCB838A00F3808F /* BLEDevice.h */,
 				E247DCF31DCB838A00F3808F /* BLEDevice.m */,
-				E2534C0E1DCB8A4500F61CCF /* BLEDevicesManager.h */,
-				E2534C0D1DCB8A4500F61CCF /* BLEDevicesManager.m */,
+				E2534C0E1DCB8A4500F61CCF /* BLEManager.h */,
+				E2534C0D1DCB8A4500F61CCF /* BLEManager.m */,
 			);
 			name = BLE;
 			sourceTree = "<group>";
@@ -140,7 +125,6 @@
 			isa = PBXGroup;
 			children = (
 				E283FAE7263A8EA9007354B7 /* CSL */,
-				E247DD061DCB839C00F3808F /* Common */,
 				E247DD071DCB83A300F3808F /* BLE */,
 				E2A40D6B2636DBBC000EE4AE /* Sensor */,
 				E247DCFA1DCB838A00F3808F /* Info.plist */,
@@ -153,10 +137,9 @@
 		E2A40D6B2636DBBC000EE4AE /* Sensor */ = {
 			isa = PBXGroup;
 			children = (
-				E2A40D6C2636DD0A000EE4AE /* BLESensor.h */,
-				E2A40D6D2636DD23000EE4AE /* BLESensor.m */,
-				E2A40D6F2636DF80000EE4AE /* BLESensorFeature.h */,
-				E2A40D6E2636DF6E000EE4AE /* BLESensorFeature.m */,
+				E24579AE2BBBED7600485A30 /* BLESensorDevice.h */,
+				E2A40D6F2636DF80000EE4AE /* BLESensor.h */,
+				E2A40D6E2636DF6E000EE4AE /* BLESensor.m */,
 			);
 			path = Sensor;
 			sourceTree = "<group>";
@@ -169,13 +152,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				E247DD051DCB838A00F3808F /* BLESDK.h in Headers */,
-				E247DD021DCB838A00F3808F /* CoolUtility.h in Headers */,
-				E2534C101DCB8A4500F61CCF /* BLEDevicesManager.h in Headers */,
+				E24579AF2BBBED7600485A30 /* BLESensorDevice.h in Headers */,
+				E2534C101DCB8A4500F61CCF /* BLEManager.h in Headers */,
 				E247DCFC1DCB838A00F3808F /* BLEDevice.h in Headers */,
 				E247DD001DCB838A00F3808F /* BLEUtility.h in Headers */,
 				E2E1B9EE263BFFF20096536F /* CSL.h in Headers */,
-				E2E1B9EF263BFFF20096536F /* BLESensor.h in Headers */,
-				E2E1B9F0263BFFF20096536F /* BLESensorFeature.h in Headers */,
+				E2E1B9F0263BFFF20096536F /* BLESensor.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -288,12 +270,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				E2E1B9F2263C000F0096536F /* CSL.m in Sources */,
-				E2E1B9F3263C000F0096536F /* BLESensor.m in Sources */,
-				E2E1B9F4263C000F0096536F /* BLESensorFeature.m in Sources */,
+				E2E1B9F4263C000F0096536F /* BLESensor.m in Sources */,
 				E247DD011DCB838A00F3808F /* BLEUtility.m in Sources */,
-				E247DD031DCB838A00F3808F /* CoolUtility.m in Sources */,
 				E247DCFD1DCB838A00F3808F /* BLEDevice.m in Sources */,
-				E2534C0F1DCB8A4500F61CCF /* BLEDevicesManager.m in Sources */,
+				E2534C0F1DCB8A4500F61CCF /* BLEManager.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -477,6 +457,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = "$(SRCROOT)/BLESDK/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MACH_O_TYPE = staticlib;
 				PRODUCT_BUNDLE_IDENTIFIER = erabbit.BLE;
@@ -495,6 +476,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = "$(SRCROOT)/BLESDK/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MACH_O_TYPE = staticlib;
 				PRODUCT_BUNDLE_IDENTIFIER = erabbit.BLE;

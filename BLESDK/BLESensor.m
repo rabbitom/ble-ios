@@ -1,5 +1,5 @@
 //
-//  BLESensor.m
+//  BLESensorFeature.m
 //  BLESDK
 //
 //  Created by 郝建林 on 2021/4/26.
@@ -8,48 +8,64 @@
 
 #import <Foundation/Foundation.h>
 #import "BLESensor.h"
-#import "BLESensorFeature.h"
+#import "CSL.h"
 
 @interface BLESensor()
-{
-    NSMutableDictionary *features;
-}
+
 @end
 
 @implementation BLESensor
 
-- (id)initWithPeripheral: (CBPeripheral*)peripheral advertisementData: (NSDictionary*)ad classMetadata: (NSDictionary*)classMetadata {
-    if(self = [super initWithPeripheral:peripheral advertisementData:ad classMetadata:classMetadata]) {
-        NSArray *servicesArray = classMetadata[@"services"];
-        if(servicesArray) {
-            for(NSDictionary *serviceItem in servicesArray) {
-                NSArray *characteristicsArray = serviceItem[@"characteristics"];
-                if(characteristicsArray) {
-                    for(NSDictionary *characteristicItem in characteristicsArray) {
-                        NSString *characteristicName = characteristicItem[@"name"];
-                        if([characteristicItem[@"function"] isEqual: @"feature"]) {
-                            if(features == nil)
-                                features = [NSMutableDictionary dictionary];
-                            features[characteristicName] = [[BLESensorFeature alloc] initWithConfig: characteristicItem];
-                        }
-                    }
-                }
-            }
-        }
+- (id)initWithConfig: (NSDictionary*)_config switchable:(BOOL)isSwitchable{
+    if(self = [super init]) {
+        config = _config;
+        _settings = [NSMutableDictionary dictionary];
+        _status = [NSMutableDictionary dictionary];
+        _switchable = isSwitchable;
     }
     return self;
 }
 
-- (NSDictionary*)features {
-    return features;
+- (NSString*)name {
+    return config[@"name"];
 }
 
-- (void)onReceiveData: (NSData*)data forProperty: (NSString*)propertyName {
-    BLESensorFeature *feature = features[propertyName];
-    if(feature != nil) {
-        if([feature parseData:data])
-            [self onValueChanged:feature ofProperty:propertyName];
+- (NSString*)type {
+    return config[@"type"];
+}
+
+- (NSArray*)attributes {
+    return config[@"attributes"];
+}
+
+- (NSString*)unit {
+    return config[@"unit"];
+}
+
+- (NSString*)valueString {
+    if(self.value == nil)
+        return @"";
+    if([self.value isKindOfClass:[NSArray class]]) {
+        NSArray *values = [self.value valueForKeyPath:@"description"];
+        return [NSString stringWithFormat:@"[%@]%@", [values componentsJoinedByString:@","], self.unit];
     }
+    else if([self.value isKindOfClass:[NSDictionary class]]) {
+        NSMutableArray *values = [NSMutableArray array];
+        for(NSDictionary *attribute in self.attributes) {
+            id attributeValue = self.value[attribute[@"name"]];
+            [values addObject:
+                 [NSString stringWithFormat:@"%@:%@%@", attribute[@"name"], attributeValue, attribute[@"unit"]]
+            ];
+        }
+        return [values componentsJoinedByString:@", "];
+    }
+    else
+        return [NSString stringWithFormat:@"%@%@", self.value, self.unit];
+}
+
+- (void)parseData: (NSData*)data {
+    int parseLength = 0;
+    self.value = csl_decode(data, 0, config, &parseLength);
 }
 
 @end

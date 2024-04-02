@@ -16,7 +16,8 @@ FOUNDATION_EXPORT const unsigned char testVersionString[];
 
 // In this header, you should import all the public headers of your framework using statements like #import <BLESDK/PublicHeader.h>
 
-#import <BLESDK/CoolUtility.h>
 #import <BLESDK/BLEUtility.h>
 #import <BLESDK/BLEDevice.h>
-#import <BLESDK/BLEDevicesManager.h>
+#import <BLESDK/BLEManager.h>
+#import <BLESDK/BLESensor.h>
+#import <BLESDK/BLESensorDevice.h>
