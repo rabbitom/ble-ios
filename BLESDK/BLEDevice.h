@@ -45,6 +45,9 @@
 - (void)onReceivedData: (NSData*)data from: (NSString*)characteristicName;
 
 - (void)callFeature: (NSString*)name withValue: (id)value;
-- (void)onValueUpdated: (id)value ofFeature: (NSString*)name;
+- (void)onFeatureUpdated: (NSString*)name value:(id)value;
+- (id)stateValueOfFeature: (NSString*)name formatted: (BOOL)format;
+
+- (NSArray*)settings;
 
 @end

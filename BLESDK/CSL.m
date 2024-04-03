@@ -439,12 +439,15 @@ NSData* csl_encode(id value, NSDictionary *config) {
 }
 
 NSString *csl_format_value(id value, NSDictionary *config) {
+    if(value == nil)
+        return nil;
+    NSString *res;
     if([config[@"type"] isEqualToString:@"array"]) {
         //[value isKindOfClass:[NSArray class]]
         NSMutableArray *values = [NSMutableArray array];
         for(id valueItem in (NSArray*)value)
             [values addObject: csl_format_value(valueItem, config[@"arrayItem"])];
-        return [NSString stringWithFormat:@"[%@]%@", [values componentsJoinedByString:@","], config[@"unit"]];
+        res = [NSString stringWithFormat:@"[%@]", [values componentsJoinedByString:@","]];
     }
     else if([config[@"type"] isEqualToString:@"object"]) {
         //[value isKindOfClass:[NSDictionary class]]
@@ -458,8 +461,12 @@ NSString *csl_format_value(id value, NSDictionary *config) {
     else {
         if([value isKindOfClass:[NSNumber class]]) {
             if([config[@"scale"] isEqualToNumber:@0.01])
-                return [NSString stringWithFormat:@"%.2f%@", [(NSNumber*)value floatValue], config[@"unit"]];
+                res = [NSString stringWithFormat:@"%.2f", [(NSNumber*)value floatValue]];
         }
-        return [NSString stringWithFormat:@"%@%@", value, config[@"unit"]];
+        res = [value description];
     }
+    if(config[@"unit"])
+        return [res stringByAppendingString:config[@"unit"]];
+    else
+        return res;
 }

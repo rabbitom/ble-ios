@@ -21,3 +21,4 @@ FOUNDATION_EXPORT const unsigned char testVersionString[];
 #import <BLESDK/BLEManager.h>
 #import <BLESDK/BLESensor.h>
 #import <BLESDK/BLESensorDevice.h>
+#import <BLESDK/CSL.h>

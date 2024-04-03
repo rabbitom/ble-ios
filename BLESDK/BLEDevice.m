@@ -40,6 +40,7 @@
         characteristicsByName = [NSMutableDictionary dictionary];
         featuresByName = [NSMutableDictionary dictionary];
         featuresById = [NSMutableDictionary dictionary];
+        state = [NSMutableDictionary dictionary];
         if(classMetadata) {
             metadata = classMetadata;
             if(metadata[@"services"])
@@ -56,12 +57,49 @@
     NSDictionary *feature = featuresByName[name];
     if(feature == nil)
         return;
-    NSData *payload;
-    if(feature[@"request"])
-        payload = csl_encode(value, feature[@"request"]);
     NSDictionary *packetConfig = metadata[@"packet"];
-    NSData *packet = csl_encode(@{@"featureId": feature[@"id"], @"featurePayload": payload}, packetConfig);
+    NSMutableDictionary *packetValue = [NSMutableDictionary dictionaryWithDictionary:@{@"featureId": feature[@"id"]}];
+    if(feature[@"request"]) {
+        if(value) {
+            NSData *payload = csl_encode(value, feature[@"request"]);
+            [packetValue setObject:payload forKey:@"featurePayload"];
+        }
+        else
+            @throw [NSException exceptionWithName:@"Call feature failed" reason:@"value not set" userInfo:@{@"name":name}];
+    }
+    NSData *packet = csl_encode(packetValue, packetConfig);
     [self writeData:packet to:@"send"];
+}
+
+- (NSArray*)settings {
+    if(metadata[@"settings"]) {
+        NSMutableArray *settings = [NSMutableArray array];
+        for(NSDictionary *name in (NSArray*)metadata[@"settings"])
+            [settings addObject:featuresByName[name]];
+        return settings;
+    }
+    else
+        return nil;
+}
+
+- (id)stateValueOfFeature: (NSString*)featureName formatted: (BOOL)format {
+    id value;
+    NSDictionary *feature = featuresByName[featureName];
+    if(feature) {
+        if(feature[@"stateKeyPath"]) {
+            value = [state valueForKeyPath:feature[@"stateKeyPath"]];
+            if(value != nil && format) {
+                NSDictionary *config = feature;
+                for(NSString *payloadKey in @[@"request", @"response", @"payload"]) {
+                    config = feature[payloadKey];
+                    if(config)
+                        break;
+                }
+                value = csl_format_value(value, config);
+            }
+        }
+    }
+    return value;
 }
 
 - (void)updateServices: (NSArray*)servicesArray {
@@ -83,7 +121,7 @@
             NSData *data = csl_parse_hex_str(featureId);
             featureId = [NSNumber numberWithUnsignedChar:((Byte*)[data bytes])[0]];
         }
-        [featuresById setObject:feature forKey:feature[@"id"]];
+        [featuresById setObject:feature forKey:featureId];
     }];
 }
 
@@ -105,6 +143,8 @@
 - (void)updateAdvertisementData: (NSDictionary*)ad {
     for(id key in ad.allKeys)
         [advertisementData setObject:ad[key] forKey:key];
+    if(ad[CBAdvertisementDataLocalNameKey])
+        state[@"localName"] = ad[CBAdvertisementDataLocalNameKey];
     [self updateServiceData];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"BLEDevice.AdvUpdated" object:self];
 }
@@ -152,8 +192,17 @@
         id featurePayload = packet[@"featurePayload"];
         if(featurePayload) {
             NSDictionary *feature = featuresById[featureId];
-            id value = csl_decode(featurePayload, 0, feature, &decodeLength);
-            [self onFeatureUpdated:feature[@"name"] value:value];
+            if(feature != nil) {
+                NSDictionary *payloadConfig = (feature[@"response"] != nil) ? feature[@"response"] : feature[@"payload"];
+                if(payloadConfig) {
+                    id value = csl_decode(featurePayload, 0, payloadConfig, &decodeLength);
+                    if(feature[@"stateKeyPath"])
+                        [state setValue:value forKeyPath:feature[@"stateKeyPath"]];
+                    [self onFeatureUpdated:feature[@"name"] value:value];
+                }
+            }
+            else
+                NSLog(@"feature not found: %#X", [featureId intValue]);
         }
     }
     else
