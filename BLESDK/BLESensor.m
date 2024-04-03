@@ -11,7 +11,9 @@
 #import "CSL.h"
 
 @interface BLESensor()
-
+{
+    id value;
+}
 @end
 
 @implementation BLESensor
@@ -39,6 +41,15 @@
 
 - (NSString*)unit {
     return config[@"unit"];
+}
+
+- (id)value {
+    return value;
+}
+
+- (void)setValue: (id)newValue {
+    value = newValue;
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"BLESensor.ValueUpdated" object:self userInfo:@{@"name":self.name, @"value":value}];
 }
 
 - (NSString*)valueString {

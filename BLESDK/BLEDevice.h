@@ -30,8 +30,9 @@
 
 - (id)initWithPeripheral: (CBPeripheral*)peripheral advertisementData: (NSDictionary*)ad classMetadata: (NSDictionary*)classMetadata;
 - (void)updateAdvertisementData: (NSDictionary*)ad;
+- (void)updateServiceData;
 
-- (void)connect;
+- (BOOL)connect;
 - (void)disconnect;
 - (void)onConnected;
 - (void)onReady;

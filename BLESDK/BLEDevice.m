@@ -153,22 +153,24 @@
         if(featurePayload) {
             NSDictionary *feature = featuresById[featureId];
             id value = csl_decode(featurePayload, 0, feature, &decodeLength);
-            [self onValueUpdated:value ofFeature:feature[@"name"]];
+            [self onFeatureUpdated:feature[@"name"] value:value];
         }
     }
     else
         [[NSNotificationCenter defaultCenter] postNotificationName:@"BLEDevice.ReceviedData" object:self userInfo:@{@"data":data, @"property":characteristicName}];
 }
 
-- (void)onValueUpdated: (id)value ofFeature: (NSString*)name {
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"BLEDevice.ValueUpdated" object:self userInfo:@{@"name":name, @"value":value}];
+- (void)onFeatureUpdated: (NSString*)name value:(id)value  {
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"BLEDevice.FeatureUpdated" object:self userInfo:@{@"name":name, @"value":value}];
 }
 
-- (void)connect {
+- (BOOL)connect {
     CBCentralManager *central = [BLEManager central];
     if(self.peripheral.state != CBPeripheralStateConnected) {
-        if(central.state == CBManagerStatePoweredOn)
+        if(central.state == CBManagerStatePoweredOn) {
             [central connectPeripheral:self.peripheral options:nil];
+            return YES;
+        }
         else
             NSLog(@"central not powered on");
     }
@@ -176,6 +178,7 @@
         NSLog(@"periperal already connected");
         [self onConnected];
     }
+    return NO;
 }
 
 - (BOOL)isConnected {

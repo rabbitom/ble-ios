@@ -15,6 +15,8 @@
 
 @property (readonly) NSArray* sensors;
 
+- (BLESensor*)sensorWithName: (NSString*)sensorName;
+
 - (void)switchSensor: (NSString*)sensorName onOff: (BOOL)on;
 
 @end
