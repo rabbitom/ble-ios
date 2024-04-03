@@ -53,24 +53,9 @@
 }
 
 - (NSString*)valueString {
-    if(self.value == nil)
+    if(value == nil)
         return @"";
-    if([self.value isKindOfClass:[NSArray class]]) {
-        NSArray *values = [self.value valueForKeyPath:@"description"];
-        return [NSString stringWithFormat:@"[%@]%@", [values componentsJoinedByString:@","], self.unit];
-    }
-    else if([self.value isKindOfClass:[NSDictionary class]]) {
-        NSMutableArray *values = [NSMutableArray array];
-        for(NSDictionary *attribute in self.attributes) {
-            id attributeValue = self.value[attribute[@"name"]];
-            [values addObject:
-                 [NSString stringWithFormat:@"%@:%@%@", attribute[@"name"], attributeValue, attribute[@"unit"]]
-            ];
-        }
-        return [values componentsJoinedByString:@", "];
-    }
-    else
-        return [NSString stringWithFormat:@"%@%@", self.value, self.unit];
+    return csl_format_value(value, config);
 }
 
 - (void)parseData: (NSData*)data {

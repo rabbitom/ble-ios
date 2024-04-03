@@ -437,3 +437,29 @@ NSData* csl_encode(id value, NSDictionary *config) {
     else
         @throw [NSException exceptionWithName:@"Encoding failed" reason:@"type not supported" userInfo:@{@"config":config}];
 }
+
+NSString *csl_format_value(id value, NSDictionary *config) {
+    if([config[@"type"] isEqualToString:@"array"]) {
+        //[value isKindOfClass:[NSArray class]]
+        NSMutableArray *values = [NSMutableArray array];
+        for(id valueItem in (NSArray*)value)
+            [values addObject: csl_format_value(valueItem, config[@"arrayItem"])];
+        return [NSString stringWithFormat:@"[%@]%@", [values componentsJoinedByString:@","], config[@"unit"]];
+    }
+    else if([config[@"type"] isEqualToString:@"object"]) {
+        //[value isKindOfClass:[NSDictionary class]]
+        NSMutableArray *values = [NSMutableArray array];
+        for(NSDictionary *attribute in config[@"attributes"]) {
+            id attributeValue = value[attribute[@"name"]];
+            [values addObject: csl_format_value(attributeValue, attribute)];
+        }
+        return [values componentsJoinedByString:@", "];
+    }
+    else {
+        if([value isKindOfClass:[NSNumber class]]) {
+            if([config[@"scale"] isEqualToNumber:@0.01])
+                return [NSString stringWithFormat:@"%.2f%@", [(NSNumber*)value floatValue], config[@"unit"]];
+        }
+        return [NSString stringWithFormat:@"%@%@", value, config[@"unit"]];
+    }
+}
