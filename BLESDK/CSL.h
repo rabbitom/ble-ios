@@ -9,12 +9,18 @@
 #ifndef CSL_h
 #define CSL_h
 
+#import <Foundation/Foundation.h>
+
 id csl_decode(NSData *data, int offset, NSDictionary *config, int *length);
 
-NSData* csl_encode(id value, NSDictionary *config);
+NSData *csl_encode(id value, NSDictionary *config);
 
 NSData *csl_parse_hex_str(NSString* str);
 
 NSString *csl_format_value(id value, NSDictionary *config);
+
+@interface NSDictionary (KeysSet)
+- (NSArray*)keysSet;
+@end
 
 #endif /* CSL_h */

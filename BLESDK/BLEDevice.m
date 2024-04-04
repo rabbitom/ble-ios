@@ -56,7 +56,7 @@
 - (void)callFeature: (NSString*)name withValue: (id)value {
     NSDictionary *feature = featuresByName[name];
     if(feature == nil)
-        return;
+        @throw [NSException exceptionWithName:@"Call feature failed" reason:@"feature not found" userInfo:@{@"name":name}];
     NSDictionary *packetConfig = metadata[@"packet"];
     NSMutableDictionary *packetValue = [NSMutableDictionary dictionaryWithDictionary:@{@"featureId": feature[@"id"]}];
     if(feature[@"request"]) {
@@ -72,14 +72,7 @@
 }
 
 - (NSArray*)settings {
-    if(metadata[@"settings"]) {
-        NSMutableArray *settings = [NSMutableArray array];
-        for(NSDictionary *name in (NSArray*)metadata[@"settings"])
-            [settings addObject:featuresByName[name]];
-        return settings;
-    }
-    else
-        return nil;
+    return metadata[@"settings"];
 }
 
 - (id)stateValueOfFeature: (NSString*)featureName formatted: (BOOL)format {
@@ -187,19 +180,43 @@
 - (void)onReceivedData: (NSData*)data from: (NSString*)characteristicName {
     if([characteristicName isEqual:@"recv"] && metadata[@"packet"]) {
         int decodeLength = 0;
-        NSDictionary *packet = csl_decode(data, 0, metadata[@"packet"], &decodeLength);
+        NSDictionary *packet;
+        @try {
+            packet = csl_decode(data, 0, metadata[@"packet"], &decodeLength);
+        }
+        @catch(NSException *exception) {
+            NSLog(@"[BLE]decoding packet failed: %@", exception);
+            return;
+        }
         NSNumber *featureId = packet[@"featureId"];
         id featurePayload = packet[@"featurePayload"];
         if(featurePayload) {
             NSDictionary *feature = featuresById[featureId];
             if(feature != nil) {
+                id value;
                 NSDictionary *payloadConfig = (feature[@"response"] != nil) ? feature[@"response"] : feature[@"payload"];
                 if(payloadConfig) {
-                    id value = csl_decode(featurePayload, 0, payloadConfig, &decodeLength);
-                    if(feature[@"stateKeyPath"])
-                        [state setValue:value forKeyPath:feature[@"stateKeyPath"]];
-                    [self onFeatureUpdated:feature[@"name"] value:value];
+                    @try {
+                        value = csl_decode(featurePayload, 0, payloadConfig, &decodeLength);
+                    }
+                    @catch(NSException *exception) {
+                        NSLog(@"[BLE]decoding feature payload failed: %@", exception);
+                        return;
+                    }
+                    NSString *stateKeyPath = feature[@"stateKeyPath"];
+                    if(stateKeyPath) {
+                        if([stateKeyPath isEqualToString:@"..."]) {
+                            if([value isKindOfClass:[NSDictionary class]]) {
+                                [(NSDictionary*)value enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+                                    [state setValue:obj forKeyPath:key];
+                                }];
+                            }
+                        }
+                        else
+                            [state setValue:value forKeyPath:feature[@"stateKeyPath"]];
+                    }
                 }
+                [self onFeatureResponse:feature[@"name"] value:value];
             }
             else
                 NSLog(@"feature not found: %#X", [featureId intValue]);
@@ -209,8 +226,15 @@
         [[NSNotificationCenter defaultCenter] postNotificationName:@"BLEDevice.ReceviedData" object:self userInfo:@{@"data":data, @"property":characteristicName}];
 }
 
-- (void)onFeatureUpdated: (NSString*)name value:(id)value  {
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"BLEDevice.FeatureUpdated" object:self userInfo:@{@"name":name, @"value":value}];
+- (NSDictionary*)featureWithName: (NSString*)name {
+    return featuresByName[name];
+}
+
+- (void)onFeatureResponse: (NSString*)name value:(id)value  {
+    NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithDictionary:@{@"name":name}];
+    if(value)
+        userInfo[@"value"] = value;
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"BLEDevice.FeatureResponse" object:self userInfo:userInfo];
 }
 
 - (BOOL)connect {
@@ -241,15 +265,16 @@
 - (void)writeData: (NSData*)data to: (NSString*)characteristicName {
     CBCharacteristic *characteristic = characteristicsByName[characteristicName];
     if(characteristic != nil) {
+        NSLog(@"[BLE][Data]->%@: %@", characteristicName, data);
         if(characteristic.properties & CBCharacteristicPropertyWrite)
             [self.peripheral writeValue:data forCharacteristic:characteristic type:CBCharacteristicWriteWithResponse];
         else if(characteristic.properties & CBCharacteristicPropertyWriteWithoutResponse)
             [self.peripheral writeValue:data forCharacteristic:characteristic type:CBCharacteristicWriteWithoutResponse];
         else
-            NSLog(@"characteristic cannot be written");
+            @throw [NSException exceptionWithName:@"write data faield" reason:@"characteristic does not support write" userInfo:@{@"name":characteristicName,@"uuid":characteristic.UUID}];
     }
     else
-        NSLog(@"charactristic not found of name %@", characteristicName);
+        @throw [NSException exceptionWithName:@"write data failed" reason:@"charactristic not found" userInfo:@{@"name":characteristicName}];
 }
 
 - (void)readData:(NSString *)characteristicName {
@@ -326,17 +351,15 @@
         NSString *characteristicName = characteristicNamesByUUID[characteristic.UUID];
         if(characteristicName)
             [self onReceivedData:characteristic.value from:characteristicName];
-        NSLog(@"[BLE]Updated value of %@: %@", characteristicName ? characteristicName : characteristic.UUID, characteristic.value);
+        NSLog(@"[BLE][Data]<-%@: %@", characteristicName ? characteristicName : characteristic.UUID, characteristic.value);
     }
     else
-        NSLog(@"[BLE]Update value failed: %@", error);
+        NSLog(@"[BLE]update value failed: %@", error);
 }
 
 -(void)peripheral:(CBPeripheral *)peripheral didWriteValueForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error
 {
-    if (error == nil)
-        NSLog(@"[BLE]Write value succeed!");
-    else
-        NSLog(@"[BLE]Write value failed: %@", error);
+    if(error != nil)
+        NSLog(@"[BLE]write value failed: %@", error);
 }
 @end

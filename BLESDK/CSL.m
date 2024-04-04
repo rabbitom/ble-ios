@@ -6,7 +6,6 @@
 //  Copyright © 2021 CoolTools. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import "CSL.h"
 
 void checkLength(NSData *data, int offset, int byteLength, int *pLength) {
@@ -135,6 +134,22 @@ id csl_decode_enum(NSData *data, int offset, NSArray *values, int *pLength) {
     return item[@"name"];
 }
 
+id csl_get_variable_type(NSDictionary *value, NSDictionary *config) {
+    NSString *typeName = value[config[@"typeName"]];
+    if(typeName) {
+        NSArray *types = config[@"types"];
+        NSUInteger typeIndex = [types indexOfObjectPassingTest:^BOOL(NSDictionary *type, NSUInteger idx, BOOL * _Nonnull stop) {
+            return [type[@"name"] isEqualToString:typeName];
+        }];
+        if(typeIndex != NSNotFound)
+            return types[typeIndex];
+        else
+            @throw [NSException exceptionWithName:@"csl failed" reason:@"variable type not found" userInfo:@{@"config": config}];
+    }
+    else
+        @throw [NSException exceptionWithName:@"csl failed" reason:@"type name could not be determined" userInfo:@{@"config": config}];
+}
+
 id csl_decode_object(NSData *data, int offset, NSDictionary *config, int *pLength) {
     NSNumber *byteLength = config[@"byteLength"];
     if(byteLength != nil)
@@ -142,11 +157,16 @@ id csl_decode_object(NSData *data, int offset, NSDictionary *config, int *pLengt
     NSArray *attributes = config[@"attributes"];
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     int totalLength = 0;
-    for(NSDictionary *attr in attributes) {
+    for(NSDictionary *_attr in attributes) {
+        NSDictionary *attr = _attr;
         NSString *key = attr[@"name"];
+        if([attr[@"type"] isEqualToString:@"variable"])
+            attr = csl_get_variable_type(dict, attr);
         int attrLength = 0;
         dict[key] = csl_decode(data, offset + totalLength, attr, &attrLength);
         totalLength += attrLength;
+        if(offset + totalLength == data.length)
+            break; //skip remaining attributes, without checking for optional
     }
     *pLength = totalLength;
     return dict;
@@ -329,7 +349,8 @@ NSData *csl_encode_enum(NSString *name, NSArray *values) {
 
 NSData *csl_encode_object(NSDictionary* value, NSArray *fields) {
     NSMutableData *data = [NSMutableData data];
-    for(NSDictionary *field in fields) {
+    for(NSDictionary *_field in fields) {
+        NSDictionary *field = _field;
         id fieldValue = field[@"value"];
         if(fieldValue == nil) {
             NSString* fieldName = field[@"name"];
@@ -342,13 +363,15 @@ NSData *csl_encode_object(NSDictionary* value, NSArray *fields) {
                 }
                 else {
                     NSNumber *optional = field[@"optional"];
-                    if(optional != nil && [optional boolValue])
+                    if([optional boolValue])
                         continue;
                     else
                         @throw [NSException exceptionWithName:@"Encoding failed" reason:@"value not found" userInfo:@{@"field":field}];
                 }
             }
         }
+        if([field[@"type"] isEqualToString:@"variable"])
+            field = csl_get_variable_type(value, field);
         [data appendData:csl_encode(fieldValue,field)];
     }
     return data;
@@ -458,6 +481,13 @@ NSString *csl_format_value(id value, NSDictionary *config) {
         }
         return [values componentsJoinedByString:@", "];
     }
+    else if([config[@"type"] isEqualToString:@"bitmask"]) {
+        NSArray *keysSet = [(NSDictionary*)value keysSet];
+        if(keysSet.count)
+            return [keysSet componentsJoinedByString:@", "];
+        else
+            return @"-";
+    }
     else {
         if([value isKindOfClass:[NSNumber class]]) {
             if([config[@"scale"] isEqualToNumber:@0.01])
@@ -470,3 +500,14 @@ NSString *csl_format_value(id value, NSDictionary *config) {
     else
         return res;
 }
+
+@implementation NSDictionary (KeysSet)
+
+- (NSArray*)keysSet {
+    return [[self keysOfEntriesPassingTest:^BOOL(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        return [(NSNumber*)obj boolValue];
+    }] allObjects];
+}
+
+@end
+
