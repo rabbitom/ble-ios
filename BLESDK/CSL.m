@@ -18,6 +18,15 @@ void checkLength(NSData *data, int offset, int byteLength, int *pLength) {
     *pLength = byteLength;
 }
 
+id csl_value_with_scale(int value, NSNumber *scale) {
+    if(scale != nil) {
+        NSDecimalNumber *decimal = [NSDecimalNumber decimalNumberWithString:[NSString stringWithFormat:@"%d", value]];
+        return [decimal decimalNumberByMultiplyingBy:[NSDecimalNumber decimalNumberWithDecimal:scale.decimalValue]];
+    }
+    else
+        return [NSNumber numberWithInt: value];
+}
+
 id csl_decode_uint(NSData* data, int offset, uint bits, bool le, NSNumber *scale, int *pLength) {
     int byteLength = bits / 8;
     checkLength(data, offset, byteLength, pLength);
@@ -29,10 +38,7 @@ id csl_decode_uint(NSData* data, int offset, uint bits, bool le, NSNumber *scale
         else
             result = (result << 8) | bytes[offset + i];
     }
-    if(scale != nil)
-        return [NSNumber numberWithFloat:result * [scale floatValue]];
-    else
-        return [NSNumber numberWithUnsignedInt:result];
+    return csl_value_with_scale(result, scale);
 }
 
 id csl_decode_int16(NSData* data, int offset, bool le, NSNumber *scale, int *pLength) {
@@ -45,10 +51,7 @@ id csl_decode_int16(NSData* data, int offset, bool le, NSNumber *scale, int *pLe
         else
             result = (result << 8) | bytes[offset + i];
     }
-    if(scale != nil)
-        return [NSNumber numberWithFloat:result * [scale floatValue]];
-    else
-        return [NSNumber numberWithShort: result];
+    return csl_value_with_scale(result, scale);
 }
 
 id csl_decode_int32(NSData* data, int offset, bool le, NSNumber *scale, int *pLength) {
@@ -61,10 +64,7 @@ id csl_decode_int32(NSData* data, int offset, bool le, NSNumber *scale, int *pLe
         else
             result = (result << 8) | bytes[offset + i];
     }
-    if(scale != nil)
-        return [NSNumber numberWithFloat:result * [scale floatValue]];
-    else
-        return [NSNumber numberWithInt: result];
+    return csl_value_with_scale(result, scale);
 }
 
 id csl_decode_float32le(NSData* data, int offset, int *pLength) {
@@ -472,29 +472,17 @@ NSString *csl_format_value(id value, NSDictionary *config) {
             [values addObject: csl_format_value(valueItem, config[@"arrayItem"])];
         res = [NSString stringWithFormat:@"[%@]", [values componentsJoinedByString:@","]];
     }
-    else if([config[@"type"] isEqualToString:@"object"]) {
-        //[value isKindOfClass:[NSDictionary class]]
+    else if([value isKindOfClass:[NSDictionary class]]) {
+        //config.type is object or bitmask
         NSMutableArray *values = [NSMutableArray array];
         for(NSDictionary *attribute in config[@"attributes"]) {
-            id attributeValue = value[attribute[@"name"]];
-            [values addObject: csl_format_value(attributeValue, attribute)];
+            id attributeValue = ((NSDictionary*)value)[attribute[@"name"]];
+            [values addObject: [NSString stringWithFormat:@"%@=%@", attribute[@"name"], csl_format_value(attributeValue, attribute)]];
         }
         return [values componentsJoinedByString:@", "];
     }
-    else if([config[@"type"] isEqualToString:@"bitmask"]) {
-        NSArray *keysSet = [(NSDictionary*)value keysSet];
-        if(keysSet.count)
-            return [keysSet componentsJoinedByString:@", "];
-        else
-            return @"-";
-    }
-    else {
-        if([value isKindOfClass:[NSNumber class]]) {
-            if([config[@"scale"] isEqualToNumber:@0.01])
-                res = [NSString stringWithFormat:@"%.2f", [(NSNumber*)value floatValue]];
-        }
-        res = [value description];
-    }
+    else
+        res = [(NSObject*)value description];
     if(config[@"unit"])
         return [res stringByAppendingString:config[@"unit"]];
     else

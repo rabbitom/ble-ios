@@ -27,6 +27,10 @@
     return self;
 }
 
+- (NSDictionary*)config {
+    return config;
+}
+
 - (NSString*)name {
     return config[@"name"];
 }

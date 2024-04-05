@@ -238,6 +238,15 @@
                                 }];
                             }
                         }
+                        else if([stateKeyPath hasSuffix:@"[]"]) {
+                            stateKeyPath = [stateKeyPath substringWithRange:NSMakeRange(0, stateKeyPath.length - 2)];
+                            NSMutableArray *array = [state valueForKeyPath:stateKeyPath];
+                            if(array == nil) {
+                                array = [NSMutableArray array];
+                                [state setValue:array forKeyPath:stateKeyPath];
+                            }
+                            [array addObject:value];
+                        }
                         else
                             [state setValue:value forKeyPath:feature[@"stateKeyPath"]];
                     }
@@ -290,7 +299,7 @@
     return value;
 }
 
-- (void)callFeature: (NSString*)name withValue: (id)value {
+- (BOOL)callFeature: (NSString*)name withValue: (id)value {
     NSDictionary *feature = featuresByName[name];
     if(feature == nil)
         @throw [NSException exceptionWithName:@"Call feature failed" reason:@"feature not found" userInfo:@{@"name":name}];
@@ -306,6 +315,7 @@
     }
     NSData *packet = csl_encode(packetValue, packetConfig);
     [self writeData:packet to:@"send"];
+    return NO;
 }
 
 - (void)onFeatureResponse: (NSString*)name value:(id)value  {

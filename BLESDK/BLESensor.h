@@ -16,6 +16,7 @@
     NSDictionary *config;
 }
 
+@property (readonly) NSDictionary* config;
 @property (readonly) NSString* name;
 @property (readonly) NSString* type;
 @property (readonly) NSString* unit;
