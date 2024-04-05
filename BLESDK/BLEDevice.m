@@ -26,10 +26,6 @@
 
 @implementation BLEDevice
 
-- (NSMutableDictionary*)state {
-    return state;
-}
-
 - (id)initWithPeripheral: (CBPeripheral*)peripheral advertisementData: (NSDictionary*)ad classMetadata: (NSDictionary*)classMetadata {
     if(self = [super init]) {
         _peripheral = peripheral;
@@ -53,46 +49,24 @@
     return self;
 }
 
-- (void)callFeature: (NSString*)name withValue: (id)value {
-    NSDictionary *feature = featuresByName[name];
-    if(feature == nil)
-        @throw [NSException exceptionWithName:@"Call feature failed" reason:@"feature not found" userInfo:@{@"name":name}];
-    NSDictionary *packetConfig = metadata[@"packet"];
-    NSMutableDictionary *packetValue = [NSMutableDictionary dictionaryWithDictionary:@{@"featureId": feature[@"id"]}];
-    if(feature[@"request"]) {
-        if(value) {
-            NSData *payload = csl_encode(value, feature[@"request"]);
-            [packetValue setObject:payload forKey:@"featurePayload"];
-        }
-        else
-            @throw [NSException exceptionWithName:@"Call feature failed" reason:@"value not set" userInfo:@{@"name":name}];
-    }
-    NSData *packet = csl_encode(packetValue, packetConfig);
-    [self writeData:packet to:@"send"];
+- (NSString*)deviceKey {
+    return [self.peripheral.identifier UUIDString];
+}
+
+- (NSDictionary*)advertisementData {
+    return advertisementData;
+}
+
+- (NSString*)deviceName {
+    return advertisementData[CBAdvertisementDataLocalNameKey];
+}
+
+- (NSMutableDictionary*)state {
+    return state;
 }
 
 - (NSArray*)settings {
     return metadata[@"settings"];
-}
-
-- (id)stateValueOfFeature: (NSString*)featureName formatted: (BOOL)format {
-    id value;
-    NSDictionary *feature = featuresByName[featureName];
-    if(feature) {
-        if(feature[@"stateKeyPath"]) {
-            value = [state valueForKeyPath:feature[@"stateKeyPath"]];
-            if(value != nil && format) {
-                NSDictionary *config = feature;
-                for(NSString *payloadKey in @[@"request", @"response", @"payload"]) {
-                    config = feature[payloadKey];
-                    if(config)
-                        break;
-                }
-                value = csl_format_value(value, config);
-            }
-        }
-    }
-    return value;
 }
 
 - (void)updateServices: (NSArray*)servicesArray {
@@ -104,18 +78,6 @@
             [characteristicNamesByUUID setObject:characteristicName forKey:[CBUUID UUIDWithString:characteristicUuid]];
         }
     }
-}
-
-- (void)updateFeatures: (NSArray*)featuresArray {
-    [featuresArray enumerateObjectsUsingBlock:^(NSDictionary *feature, NSUInteger idx, BOOL * _Nonnull stop) {
-        [featuresByName setObject:feature forKey:feature[@"name"]];
-        id featureId = feature[@"id"];
-        if([featureId isKindOfClass:[NSString class]]) {
-            NSData *data = csl_parse_hex_str(featureId);
-            featureId = [NSNumber numberWithUnsignedChar:((Byte*)[data bytes])[0]];
-        }
-        [featuresById setObject:feature forKey:featureId];
-    }];
 }
 
 - (void)updateServiceData {
@@ -142,16 +104,31 @@
     [[NSNotificationCenter defaultCenter] postNotificationName:@"BLEDevice.AdvUpdated" object:self];
 }
 
-- (NSDictionary*)advertisementData {
-    return advertisementData;
+#pragma mark - connect
+
+- (BOOL)connect {
+    CBCentralManager *central = [BLEManager central];
+    if(self.peripheral.state != CBPeripheralStateConnected) {
+        if(central.state == CBManagerStatePoweredOn) {
+            [central connectPeripheral:self.peripheral options:nil];
+            return YES;
+        }
+        else
+            NSLog(@"central not powered on");
+    }
+    else {
+        NSLog(@"periperal already connected");
+        [self onConnected];
+    }
+    return NO;
 }
 
-- (NSString*)deviceKey {
-    return [self.peripheral.identifier UUIDString];
+- (BOOL)isConnected {
+    return self.peripheral.state == CBPeripheralStateConnected;
 }
 
-- (NSString*)deviceName {
-    return advertisementData[CBAdvertisementDataLocalNameKey];
+- (void)disconnect {
+    [[BLEManager central] cancelPeripheralConnection:self.peripheral];
 }
 
 - (void)onConnected {
@@ -175,6 +152,55 @@
 - (void)onReady {
     [self startReceivingData:@"recv"];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"BLEDevice.Ready" object:self];
+}
+
+#pragma mark - data
+
+- (void)writeData: (NSData*)data to: (NSString*)characteristicName {
+    CBCharacteristic *characteristic = characteristicsByName[characteristicName];
+    if(characteristic != nil) {
+        NSLog(@"[BLE][Data]->%@: %@", characteristicName, data);
+        if(characteristic.properties & CBCharacteristicPropertyWrite)
+            [self.peripheral writeValue:data forCharacteristic:characteristic type:CBCharacteristicWriteWithResponse];
+        else if(characteristic.properties & CBCharacteristicPropertyWriteWithoutResponse)
+            [self.peripheral writeValue:data forCharacteristic:characteristic type:CBCharacteristicWriteWithoutResponse];
+        else
+            @throw [NSException exceptionWithName:@"write data faield" reason:@"characteristic does not support write" userInfo:@{@"name":characteristicName,@"uuid":characteristic.UUID}];
+    }
+    else
+        @throw [NSException exceptionWithName:@"write data failed" reason:@"charactristic not found" userInfo:@{@"name":characteristicName}];
+}
+
+- (void)readData:(NSString *)characteristicName {
+    CBCharacteristic *characteristic = characteristicsByName[characteristicName];
+    if(characteristic != nil)
+        [self.peripheral readValueForCharacteristic:characteristic];
+    else
+        NSLog(@"charactristic not found of name %@", characteristicName);
+}
+
+- (void)startReceivingData: (NSString*)characteristicName {
+    CBCharacteristic *characteristic = characteristicsByName[characteristicName];
+    if(characteristic != nil)
+        [self.peripheral setNotifyValue:YES forCharacteristic:characteristic];
+    else
+        NSLog(@"charactristic not found of name %@", characteristicName);
+}
+
+- (void)stopReceivingData: (NSString*)characteristicName {
+    CBCharacteristic *characteristic = characteristicsByName[characteristicName];
+    if(characteristic != nil)
+        [self.peripheral setNotifyValue:NO forCharacteristic:characteristic];
+    else
+        NSLog(@"charactristic not found of name %@", characteristicName);
+}
+
+- (BOOL)isReceivingData: (NSString*)characteristicName {
+    CBCharacteristic *characteristic = characteristicsByName[characteristicName];
+    if(characteristic != nil)
+        return characteristic.isNotifying;
+    else
+        return NO;
 }
 
 - (void)onReceivedData: (NSData*)data from: (NSString*)characteristicName {
@@ -226,8 +252,60 @@
         [[NSNotificationCenter defaultCenter] postNotificationName:@"BLEDevice.ReceviedData" object:self userInfo:@{@"data":data, @"property":characteristicName}];
 }
 
+#pragma mark - features
+
 - (NSDictionary*)featureWithName: (NSString*)name {
     return featuresByName[name];
+}
+
+- (void)updateFeatures: (NSArray*)featuresArray {
+    [featuresArray enumerateObjectsUsingBlock:^(NSDictionary *feature, NSUInteger idx, BOOL * _Nonnull stop) {
+        [featuresByName setObject:feature forKey:feature[@"name"]];
+        id featureId = feature[@"id"];
+        if([featureId isKindOfClass:[NSString class]]) {
+            NSData *data = csl_parse_hex_str(featureId);
+            featureId = [NSNumber numberWithUnsignedChar:((Byte*)[data bytes])[0]];
+        }
+        [featuresById setObject:feature forKey:featureId];
+    }];
+}
+
+- (id)stateValueOfFeature: (NSString*)featureName formatted: (BOOL)format {
+    id value;
+    NSDictionary *feature = featuresByName[featureName];
+    if(feature) {
+        if(feature[@"stateKeyPath"]) {
+            value = [state valueForKeyPath:feature[@"stateKeyPath"]];
+            if(value != nil && format) {
+                NSDictionary *config = feature;
+                for(NSString *payloadKey in @[@"request", @"response", @"payload"]) {
+                    config = feature[payloadKey];
+                    if(config)
+                        break;
+                }
+                value = csl_format_value(value, config);
+            }
+        }
+    }
+    return value;
+}
+
+- (void)callFeature: (NSString*)name withValue: (id)value {
+    NSDictionary *feature = featuresByName[name];
+    if(feature == nil)
+        @throw [NSException exceptionWithName:@"Call feature failed" reason:@"feature not found" userInfo:@{@"name":name}];
+    NSDictionary *packetConfig = metadata[@"packet"];
+    NSMutableDictionary *packetValue = [NSMutableDictionary dictionaryWithDictionary:@{@"featureId": feature[@"id"]}];
+    if(feature[@"request"]) {
+        if(value) {
+            NSData *payload = csl_encode(value, feature[@"request"]);
+            [packetValue setObject:payload forKey:@"featurePayload"];
+        }
+        else
+            @throw [NSException exceptionWithName:@"Call feature failed" reason:@"value not set" userInfo:@{@"name":name}];
+    }
+    NSData *packet = csl_encode(packetValue, packetConfig);
+    [self writeData:packet to:@"send"];
 }
 
 - (void)onFeatureResponse: (NSString*)name value:(id)value  {
@@ -237,79 +315,7 @@
     [[NSNotificationCenter defaultCenter] postNotificationName:@"BLEDevice.FeatureResponse" object:self userInfo:userInfo];
 }
 
-- (BOOL)connect {
-    CBCentralManager *central = [BLEManager central];
-    if(self.peripheral.state != CBPeripheralStateConnected) {
-        if(central.state == CBManagerStatePoweredOn) {
-            [central connectPeripheral:self.peripheral options:nil];
-            return YES;
-        }
-        else
-            NSLog(@"central not powered on");
-    }
-    else {
-        NSLog(@"periperal already connected");
-        [self onConnected];
-    }
-    return NO;
-}
-
-- (BOOL)isConnected {
-    return self.peripheral.state == CBPeripheralStateConnected;
-}
-
-- (void)disconnect {
-    [[BLEManager central] cancelPeripheralConnection:self.peripheral];
-}
-
-- (void)writeData: (NSData*)data to: (NSString*)characteristicName {
-    CBCharacteristic *characteristic = characteristicsByName[characteristicName];
-    if(characteristic != nil) {
-        NSLog(@"[BLE][Data]->%@: %@", characteristicName, data);
-        if(characteristic.properties & CBCharacteristicPropertyWrite)
-            [self.peripheral writeValue:data forCharacteristic:characteristic type:CBCharacteristicWriteWithResponse];
-        else if(characteristic.properties & CBCharacteristicPropertyWriteWithoutResponse)
-            [self.peripheral writeValue:data forCharacteristic:characteristic type:CBCharacteristicWriteWithoutResponse];
-        else
-            @throw [NSException exceptionWithName:@"write data faield" reason:@"characteristic does not support write" userInfo:@{@"name":characteristicName,@"uuid":characteristic.UUID}];
-    }
-    else
-        @throw [NSException exceptionWithName:@"write data failed" reason:@"charactristic not found" userInfo:@{@"name":characteristicName}];
-}
-
-- (void)readData:(NSString *)characteristicName {
-    CBCharacteristic *characteristic = characteristicsByName[characteristicName];
-    if(characteristic != nil)
-        [self.peripheral readValueForCharacteristic:characteristic];
-    else
-        NSLog(@"charactristic not found of name %@", characteristicName);
-}
-
-- (void)startReceivingData: (NSString*)characteristicName {
-    CBCharacteristic *characteristic = characteristicsByName[characteristicName];
-    if(characteristic != nil)
-        [self.peripheral setNotifyValue:YES forCharacteristic:characteristic];
-    else
-        NSLog(@"charactristic not found of name %@", characteristicName);
-}
-
-- (void)stopReceivingData: (NSString*)characteristicName {
-    CBCharacteristic *characteristic = characteristicsByName[characteristicName];
-    if(characteristic != nil)
-        [self.peripheral setNotifyValue:NO forCharacteristic:characteristic];
-    else
-        NSLog(@"charactristic not found of name %@", characteristicName);
-}
-
-- (BOOL)isReceivingData: (NSString*)characteristicName {
-    CBCharacteristic *characteristic = characteristicsByName[characteristicName];
-    if(characteristic != nil)
-        return characteristic.isNotifying;
-    else
-        return NO;
-}
-
-#pragma mark - methods for CBPeripheralDelegate
+#pragma mark - CBPeripheralDelegate
 
 //发现了服务
 - (void)peripheral:(CBPeripheral *)peripheral didDiscoverServices:(NSError *)error
