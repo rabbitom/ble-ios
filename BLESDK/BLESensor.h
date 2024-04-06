@@ -23,6 +23,7 @@
 @property (readonly) NSArray* attributes;
 
 @property (readonly) NSMutableDictionary* state;
+@property NSDictionary* settings;
 
 @property id value;
 @property (readonly) NSString* valueString;

@@ -177,6 +177,8 @@
 #pragma mark - data
 
 - (void)writeData: (NSData*)data to: (NSString*)characteristicName {
+    if(!self.isConnected)
+        @throw [NSException exceptionWithName:@"write data failed" reason:@"device is disconnected" userInfo:nil];
     CBCharacteristic *characteristic = characteristicsByName[characteristicName];
     if(characteristic != nil) {
         NSLog(@"[BLE][Data]->%@: %@", characteristicName, data);
@@ -192,6 +194,8 @@
 }
 
 - (void)readData:(NSString *)characteristicName {
+    if(!self.isConnected)
+        @throw [NSException exceptionWithName:@"read data failed" reason:@"device is disconnected" userInfo:nil];
     CBCharacteristic *characteristic = characteristicsByName[characteristicName];
     if(characteristic != nil)
         [self.peripheral readValueForCharacteristic:characteristic];
@@ -200,6 +204,8 @@
 }
 
 - (void)startReceivingData: (NSString*)characteristicName {
+    if(!self.isConnected)
+        @throw [NSException exceptionWithName:@"start receiving data failed" reason:@"device is disconnected" userInfo:nil];
     CBCharacteristic *characteristic = characteristicsByName[characteristicName];
     if(characteristic != nil)
         [self.peripheral setNotifyValue:YES forCharacteristic:characteristic];
@@ -208,6 +214,8 @@
 }
 
 - (void)stopReceivingData: (NSString*)characteristicName {
+    if(!self.isConnected)
+        @throw [NSException exceptionWithName:@"start receiving data failed" reason:@"device is disconnected" userInfo:nil];
     CBCharacteristic *characteristic = characteristicsByName[characteristicName];
     if(characteristic != nil)
         [self.peripheral setNotifyValue:NO forCharacteristic:characteristic];

@@ -150,6 +150,45 @@ id csl_get_variable_type(NSDictionary *value, NSDictionary *config) {
         @throw [NSException exceptionWithName:@"csl failed" reason:@"type name could not be determined" userInfo:@{@"config": config}];
 }
 
+//for decode
+id csl_remap_attributes(NSDictionary *value, NSArray *map) {
+    NSMutableDictionary *res = [NSMutableDictionary dictionary];
+    for(id entry in map) {
+        if([entry isKindOfClass:[NSDictionary class]]) {
+            NSString *key = ((NSDictionary*)entry)[@"key"];
+            NSArray *attributes = ((NSDictionary*)entry)[@"attributes"];
+            NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+            for(NSString *attr in attributes)
+                dict[attr] = value[attr];
+            res[key] = dict;
+        }
+        else if([entry isKindOfClass:[NSString class]])
+            res[entry] = value[entry];
+        else
+            @throw [NSException exceptionWithName:@"decoding failed" reason:@"map entry should be a string or dictionary" userInfo:@{@"map":map}];
+    }
+    return res;
+}
+
+//for encode
+id csl_unmap_attributes(NSDictionary *value, NSArray *map) {
+    NSMutableDictionary *res = [NSMutableDictionary dictionary];
+    for(id entry in map) {
+        if([entry isKindOfClass:[NSDictionary class]]) {
+            NSString *key = ((NSDictionary*)entry)[@"key"];
+            NSArray *attributes = ((NSDictionary*)entry)[@"attributes"];
+            NSMutableDictionary *dict = value[key];
+            for(NSString *attr in attributes)
+                res[attr] = dict[attr];
+        }
+        else if([entry isKindOfClass:[NSString class]])
+            res[entry] = value[entry];
+        else
+            @throw [NSException exceptionWithName:@"encoding failed" reason:@"map entry should be a string or dictionary" userInfo:@{@"map":map}];
+    }
+    return res;
+}
+
 id csl_decode_object(NSData *data, int offset, NSDictionary *config, int *pLength) {
     NSNumber *byteLength = config[@"byteLength"];
     if(byteLength != nil)
@@ -169,7 +208,10 @@ id csl_decode_object(NSData *data, int offset, NSDictionary *config, int *pLengt
             break; //skip remaining attributes, without checking for optional
     }
     *pLength = totalLength;
-    return dict;
+    if(config[@"remap"])
+        return csl_remap_attributes(dict, config[@"remap"]);
+    else
+        return dict;
 }
 
 id csl_decode_bitmask(NSData *data, int offset, NSArray *attributes, int *pLength) {
@@ -451,8 +493,11 @@ NSData* csl_encode(id value, NSDictionary *config) {
         return csl_encode_boolean(value);
     else if([type isEqualToString:@"enum"])
         return csl_encode_enum(value, config[@"values"]);
-    else if([type isEqualToString:@"object"])
+    else if([type isEqualToString:@"object"]) {
+        if(config[@"remap"])
+            value = csl_unmap_attributes(value, config[@"remap"]);
         return csl_encode_object(value, config[@"attributes"]);
+    }
     else if([type isEqualToString:@"bitmask"])
         return csl_encode_bitmask(value, config[@"attributes"]);
     else if([type isEqualToString:@"array"])
