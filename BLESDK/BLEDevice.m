@@ -19,6 +19,9 @@
     
     NSMutableDictionary *featuresByName;
     NSMutableDictionary *featuresById;
+    
+    BOOL loadingFeaturesBeforeReady;
+    int loadingFeatureIndex;
 }
 
 @end
@@ -114,10 +117,10 @@
             return YES;
         }
         else
-            NSLog(@"central not powered on");
+            NSLog(@"[BLE]connect failed: central not powered on");
     }
     else {
-        NSLog(@"periperal already connected");
+        NSLog(@"[BLE]periperal already connected");
         [self onConnected];
     }
     return NO;
@@ -144,13 +147,30 @@
         [self.peripheral discoverServices:serviceUUIDsToDiscover];
     }
     else {
-        NSLog(@"peripheral already has services: %@", self.peripheral.services);
-        [self onReady];
+        NSLog(@"[BLE]peripheral already has services: %@", self.peripheral.services);
+        [self beforeReady];
     }
 }
 
-- (void)onReady {
+- (NSArray*)featuresBeforeReady {
+    return metadata[@"featuresBeforeReady"];
+}
+
+- (void)beforeReady {
     [self startReceivingData:@"recv"];
+    loadingFeatureIndex = 0;
+    [self loadFeatureBeforeReady];
+}
+
+- (void)loadFeatureBeforeReady {
+    loadingFeaturesBeforeReady = loadingFeatureIndex < self.featuresBeforeReady.count;
+    if(loadingFeaturesBeforeReady)
+        [self callFeature:self.featuresBeforeReady[loadingFeatureIndex++] withValue:nil];
+    else
+        [self onReady];
+}
+
+- (void)onReady {
     [[NSNotificationCenter defaultCenter] postNotificationName:@"BLEDevice.Ready" object:self];
 }
 
@@ -176,7 +196,7 @@
     if(characteristic != nil)
         [self.peripheral readValueForCharacteristic:characteristic];
     else
-        NSLog(@"charactristic not found of name %@", characteristicName);
+        NSLog(@"[BLE]charactristic not found of name %@", characteristicName);
 }
 
 - (void)startReceivingData: (NSString*)characteristicName {
@@ -184,7 +204,7 @@
     if(characteristic != nil)
         [self.peripheral setNotifyValue:YES forCharacteristic:characteristic];
     else
-        NSLog(@"charactristic not found of name %@", characteristicName);
+        NSLog(@"[BLE]charactristic not found of name %@", characteristicName);
 }
 
 - (void)stopReceivingData: (NSString*)characteristicName {
@@ -192,7 +212,7 @@
     if(characteristic != nil)
         [self.peripheral setNotifyValue:NO forCharacteristic:characteristic];
     else
-        NSLog(@"charactristic not found of name %@", characteristicName);
+        NSLog(@"[BLE]charactristic not found of name %@", characteristicName);
 }
 
 - (BOOL)isReceivingData: (NSString*)characteristicName {
@@ -201,6 +221,27 @@
         return characteristic.isNotifying;
     else
         return NO;
+}
+
+- (void)updateStateValue: (id)value keyPath: (NSString*)keyPath {
+    if([keyPath isEqualToString:@"..."]) {
+        if([value isKindOfClass:[NSDictionary class]]) {
+            [(NSDictionary*)value enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+                [state setValue:obj forKeyPath:key];
+            }];
+        }
+    }
+    else if([keyPath hasSuffix:@"[]"]) {
+        keyPath = [keyPath substringWithRange:NSMakeRange(0, keyPath.length - 2)];
+        NSMutableArray *array = [state valueForKeyPath:keyPath];
+        if(array == nil) {
+            array = [NSMutableArray array];
+            [state setValue:array forKeyPath:keyPath];
+        }
+        [array addObject:value];
+    }
+    else
+        [state setValue:value forKeyPath:keyPath];
 }
 
 - (void)onReceivedData: (NSData*)data from: (NSString*)characteristicName {
@@ -230,31 +271,16 @@
                         return;
                     }
                     NSString *stateKeyPath = feature[@"stateKeyPath"];
-                    if(stateKeyPath) {
-                        if([stateKeyPath isEqualToString:@"..."]) {
-                            if([value isKindOfClass:[NSDictionary class]]) {
-                                [(NSDictionary*)value enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-                                    [state setValue:obj forKeyPath:key];
-                                }];
-                            }
-                        }
-                        else if([stateKeyPath hasSuffix:@"[]"]) {
-                            stateKeyPath = [stateKeyPath substringWithRange:NSMakeRange(0, stateKeyPath.length - 2)];
-                            NSMutableArray *array = [state valueForKeyPath:stateKeyPath];
-                            if(array == nil) {
-                                array = [NSMutableArray array];
-                                [state setValue:array forKeyPath:stateKeyPath];
-                            }
-                            [array addObject:value];
-                        }
-                        else
-                            [state setValue:value forKeyPath:feature[@"stateKeyPath"]];
-                    }
+                    if(stateKeyPath)
+                        [self updateStateValue:value keyPath:stateKeyPath];
                 }
-                [self onFeatureResponse:feature[@"name"] value:value];
+                if(loadingFeaturesBeforeReady)
+                    [self loadFeatureBeforeReady];
+                else //maybe not "else", still notify before ready
+                    [self onFeatureResponse:feature[@"name"] value:value];
             }
             else
-                NSLog(@"feature not found: %#X", [featureId intValue]);
+                NSLog(@"[BLE]feature not found: %#X", [featureId intValue]);
         }
     }
     else
@@ -283,8 +309,22 @@
     id value;
     NSDictionary *feature = featuresByName[featureName];
     if(feature) {
-        if(feature[@"stateKeyPath"]) {
-            value = [state valueForKeyPath:feature[@"stateKeyPath"]];
+        NSString *stateKeyPath = feature[@"stateKeyPath"];
+        if(stateKeyPath) {
+            if([stateKeyPath isEqualToString:@"..."]) {
+                NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+                for(NSDictionary *attr in feature[@"attributes"]) {
+                    NSString *attrName = attr[@"name"];
+                    id attrValue = state[attrName];
+                    [dict setValue:attrValue forKeyPath:attrName];
+                }
+                value = dict;
+            }
+            else {
+                if([stateKeyPath hasSuffix:@"[]"])
+                    stateKeyPath = [stateKeyPath substringWithRange: NSMakeRange(0, stateKeyPath.length - 2)];
+                value = [state valueForKeyPath:stateKeyPath];
+            }
             if(value != nil && format) {
                 NSDictionary *config = feature;
                 for(NSString *payloadKey in @[@"request", @"response", @"payload"]) {
@@ -338,7 +378,7 @@
             [peripheral discoverCharacteristics:nil forService:service];
     }
     else
-        NSLog(@"CBPeripheral discover services error: %@", error);
+        NSLog(@"[BLE]discover services of peripheral %@ failed: %@", peripheral.identifier, error);
 }
 
 //发现了特性
@@ -354,10 +394,10 @@
                 [characteristicsByName setObject:characteristic forKey:characteristicName];
         }
         if(servicesOnDiscoveringCharacteristics.count == 0)
-            [self onReady];
+            [self beforeReady];
     }
     else
-        NSLog(@"CBPeripheral discover characteristics of service %@ error: %@", service, error);
+        NSLog(@"[BLE]discover characteristics of service %@ failed: %@", service.UUID, error);
 }
 
 //接收读特性的返回和通知特性
@@ -365,17 +405,17 @@
 {
     if(error == nil) {
         NSString *characteristicName = characteristicNamesByUUID[characteristic.UUID];
+        NSLog(@"[BLE][Data]<-%@: %@", characteristicName ? characteristicName : characteristic.UUID, characteristic.value);
         if(characteristicName)
             [self onReceivedData:characteristic.value from:characteristicName];
-        NSLog(@"[BLE][Data]<-%@: %@", characteristicName ? characteristicName : characteristic.UUID, characteristic.value);
     }
     else
-        NSLog(@"[BLE]update value failed: %@", error);
+        NSLog(@"[BLE]update value of characteristic %@ failed: %@", characteristic.UUID, error);
 }
 
 -(void)peripheral:(CBPeripheral *)peripheral didWriteValueForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error
 {
     if(error != nil)
-        NSLog(@"[BLE]write value failed: %@", error);
+        NSLog(@"[BLE]write value of characteristic %@ failed: %@", characteristic.UUID, error);
 }
 @end
