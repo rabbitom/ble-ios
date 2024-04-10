@@ -517,6 +517,10 @@ NSString *csl_format_value(id value, NSDictionary *config) {
             [values addObject: csl_format_value(valueItem, config[@"arrayItem"])];
         res = [NSString stringWithFormat:@"[%@]", [values componentsJoinedByString:@","]];
     }
+    else if([config[@"type"] isEqualToString:@"object"] && [config[@"objectType"] isEqualToString:@"booleans"]) {
+        NSArray *keys = [(NSDictionary*)value keysSet];
+        return keys.count ? @"..." : @"-";
+    }
     else if([value isKindOfClass:[NSDictionary class]]) {
         //config.type is object or bitmask
         NSMutableArray *values = [NSMutableArray array];
