@@ -21,7 +21,7 @@
 
 @property (readonly) NSString *deviceKey;
 @property (readonly) NSString *deviceName;
-@property (readonly) NSString *deviceDesc;
+@property (readonly) NSArray *deviceInfo;
 @property int rssi;
 
 @property (readonly) BOOL isConnected;

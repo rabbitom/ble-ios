@@ -61,7 +61,8 @@
 }
 
 - (NSString*)deviceName {
-    return advertisementData[CBAdvertisementDataLocalNameKey];
+    NSString *localName = advertisementData[CBAdvertisementDataLocalNameKey];
+    return localName ? localName : self.peripheral.name;
 }
 
 - (NSMutableDictionary*)state {
