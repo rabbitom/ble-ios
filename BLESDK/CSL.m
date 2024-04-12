@@ -19,10 +19,8 @@ void checkLength(NSData *data, int offset, int byteLength, int *pLength) {
 }
 
 id csl_value_with_scale(int value, NSNumber *scale) {
-    if(scale != nil) {
-        NSDecimalNumber *decimal = [NSDecimalNumber decimalNumberWithString:[NSString stringWithFormat:@"%d", value]];
-        return [decimal decimalNumberByMultiplyingBy:[NSDecimalNumber decimalNumberWithDecimal:scale.decimalValue]];
-    }
+    if(scale != nil)
+        return [NSNumber numberWithFloat: value * scale.floatValue];
     else
         return [NSNumber numberWithInt: value];
 }
@@ -529,6 +527,11 @@ NSString *csl_format_value(id value, NSDictionary *config) {
             [values addObject: [NSString stringWithFormat:@"%@=%@", attribute[@"name"], csl_format_value(attributeValue, attribute)]];
         }
         return [values componentsJoinedByString:@", "];
+    }
+    else if(config[@"decimals"]) {
+        NSNumber *decimals = config[@"decimals"];
+        NSString *formatString = [NSString stringWithFormat:@"%%.%df", [decimals intValue]];
+        res = [NSString stringWithFormat:formatString, [(NSNumber*)value floatValue]];
     }
     else
         res = [(NSObject*)value description];
