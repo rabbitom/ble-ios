@@ -8,7 +8,6 @@
 
 #import <XCTest/XCTest.h>
 #import "BLESDK/CSL.h"
-#import "BLESDK/BLESensorFeature.h"
 
 void assertArrayEql(NSData *data, uint length, Byte *arr) {
     XCTAssertEqual(data.length, length);
@@ -246,7 +245,8 @@ void assertArrayEql(NSData *data, uint length, Byte *arr) {
     Byte bytes[] = {0x21};
     NSData *data = [NSData dataWithBytes:bytes length:sizeof(bytes)];
     NSDictionary *value = csl_decode(data, 0, @{
-        @"type":@"bitmask",
+        @"type":@"object",
+        @"objectType":@"bitmask",
         @"attributes":@[
             @{@"name":@"a",@"type":@"boolean",@"mask":@1}, //0x01
             @{@"name":@"b",@"type":@"boolean",@"mask":@2}, //0x00
@@ -382,7 +382,8 @@ void assertArrayEql(NSData *data, uint length, Byte *arr) {
 
 - (void)testEncode_bitmask {
     NSData *data = csl_encode(@{@"a":@YES,@"b":@NO,@"c":@0x2}, @{
-        @"type":@"bitmask",
+        @"type":@"object",
+        @"objectType":@"bitmask",
         @"attributes":@[
             @{@"name":@"a",@"type":@"boolean",@"mask":@1}, //0x01
             @{@"name":@"b",@"type":@"boolean",@"mask":@2}, //0x00

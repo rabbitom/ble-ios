@@ -280,10 +280,12 @@ id csl_decode(NSData *data, int offset, NSDictionary *config, int *pLength) {
         return csl_decode_boolean(data, offset, pLength);
     else if([type isEqual: @"enum"])
         return csl_decode_enum(data, offset, config[@"values"], pLength);
-    else if([type isEqual: @"object"])
-        return csl_decode_object(data, offset, config, pLength);
-    else if([type isEqual: @"bitmask"])
-        return csl_decode_bitmask(data, offset, config[@"attributes"], pLength);
+    else if([type isEqual: @"object"]) {
+        if([config[@"objectType"] isEqual: @"bitmask"])
+            return csl_decode_bitmask(data, offset, config[@"attributes"], pLength);
+        else
+            return csl_decode_object(data, offset, config, pLength);
+    }
     else if([type isEqual: @"array"])
         return csl_decode_array(data, offset, config, pLength);
     else
@@ -494,10 +496,11 @@ NSData* csl_encode(id value, NSDictionary *config) {
     else if([type isEqualToString:@"object"]) {
         if(config[@"remap"])
             value = csl_unmap_attributes(value, config[@"remap"]);
-        return csl_encode_object(value, config[@"attributes"]);
+        if([config[@"objectType"] isEqualToString:@"bitmask"])
+            return csl_encode_bitmask(value, config[@"attributes"]);
+        else
+            return csl_encode_object(value, config[@"attributes"]);
     }
-    else if([type isEqualToString:@"bitmask"])
-        return csl_encode_bitmask(value, config[@"attributes"]);
     else if([type isEqualToString:@"array"])
         return csl_encode_array(value, config[@"arrayItem"]);
     else
@@ -509,24 +512,26 @@ NSString *csl_format_value(id value, NSDictionary *config) {
         return nil;
     NSString *res;
     if([config[@"type"] isEqualToString:@"array"]) {
-        //[value isKindOfClass:[NSArray class]]
+        if(![value isKindOfClass:[NSArray class]])
+            @throw [NSException exceptionWithName:@"Format failed" reason:@"value class not matched with type" userInfo:@{@"value":value,@"config":config}];
         NSMutableArray *values = [NSMutableArray array];
         for(id valueItem in (NSArray*)value)
             [values addObject: csl_format_value(valueItem, config[@"arrayItem"])];
-        res = [NSString stringWithFormat:@"[%@]", [values componentsJoinedByString:@","]];
+        res = [NSString stringWithFormat:@"[%@]", [values componentsJoinedByString:@", "]];
     }
-    else if([config[@"type"] isEqualToString:@"object"] && [config[@"objectType"] isEqualToString:@"booleans"]) {
-        NSArray *keys = [(NSDictionary*)value keysSet];
-        return keys.count ? @"..." : @"-";
-    }
-    else if([value isKindOfClass:[NSDictionary class]]) {
-        //config.type is object or bitmask
-        NSMutableArray *values = [NSMutableArray array];
-        for(NSDictionary *attribute in config[@"attributes"]) {
-            id attributeValue = ((NSDictionary*)value)[attribute[@"name"]];
-            [values addObject: [NSString stringWithFormat:@"%@=%@", attribute[@"name"], csl_format_value(attributeValue, attribute)]];
+    else if([config[@"type"] isEqualToString:@"object"]) {
+        if(![value isKindOfClass:[NSDictionary class]])
+            @throw [NSException exceptionWithName:@"Format failed" reason:@"value class not matched with type" userInfo:@{@"value":value,@"config":config}];
+        if([config[@"formatOptions"][@"keysSet"] isEqualToNumber:@YES])
+            return [[(NSDictionary*)value keysSet] componentsJoinedByString:@", "];
+        else {
+            NSMutableArray *values = [NSMutableArray array];
+            for(NSDictionary *attribute in config[@"attributes"]) {
+                id attributeValue = ((NSDictionary*)value)[attribute[@"name"]];
+                [values addObject: [NSString stringWithFormat:@"%@=%@", attribute[@"name"], csl_format_value(attributeValue, attribute)]];
+            }
+            return [values componentsJoinedByString:@", "];
         }
-        return [values componentsJoinedByString:@", "];
     }
     else if(config[@"decimals"]) {
         NSNumber *decimals = config[@"decimals"];
