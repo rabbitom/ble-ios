@@ -359,15 +359,20 @@ NSData *csl_encode_string(NSString *str, NSUInteger length, NSString *encoding) 
     NSUInteger usedLength = 0;
     if([encoding isEqualToString:@"hex"]) {
         NSData *data = csl_parse_hex_str(str);
+        if(data.length > length)
+            @throw [NSException exceptionWithName:@"Encoding failed" reason:@"string too long" userInfo:@{@"string":str,@"length":@(length)}];
         Byte *hexBytes = (Byte*)[data bytes];
-        NSUInteger maxLength = MIN(length, data.length);
-        while(usedLength < maxLength) {
+        while(usedLength < data.length) {
             bytes[usedLength] = hexBytes[usedLength];
             usedLength++;
         }
     }
-    else
+    else {
+        NSUInteger bytesLength = [str lengthOfBytesUsingEncoding:NSASCIIStringEncoding];
+        if(bytesLength > length)
+            @throw [NSException exceptionWithName:@"Encoding failed" reason:@"string too long" userInfo:@{@"string":str,@"length":@(length)}];
         [str getBytes:bytes maxLength:length usedLength:&usedLength encoding:NSASCIIStringEncoding options:NSStringEncodingConversionAllowLossy range:NSMakeRange(0, str.length) remainingRange:nil];
+    }
     while(usedLength < length)
         bytes[usedLength++] = 0;
     return [NSData dataWithBytes:bytes length:length];
