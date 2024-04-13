@@ -358,6 +358,8 @@
         if(value) {
             NSData *payload = csl_encode(value, feature[@"request"]);
             [packetValue setObject:payload forKey:@"featurePayload"];
+            if(feature[@"stateKeyPath"])
+                [self updateStateValue:value keyPath:feature[@"stateKeyPath"]];
         }
         else
             @throw [NSException exceptionWithName:@"Call feature failed" reason:@"value not set" userInfo:@{@"name":name}];
