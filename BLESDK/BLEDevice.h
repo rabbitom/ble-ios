@@ -49,7 +49,6 @@
 - (void)onFeatureResponse: (NSString*)name value:(id)value;
 - (id)stateValueOfFeature: (NSString*)name formatted: (BOOL)format;
 
-- (NSArray*)details;
 - (NSArray*)settings;
 
 @end

@@ -69,10 +69,6 @@
     return state;
 }
 
-- (NSArray*)details {
-    return metadata[@"details"];
-}
-
 - (NSArray*)settings {
     return metadata[@"settings"];
 }
