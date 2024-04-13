@@ -35,7 +35,8 @@ void assertArrayEql(NSData *data, uint length, Byte *arr) {
     Byte bytes[] = {2};
     NSData *data = [NSData dataWithBytes:bytes length:sizeof(bytes)];
     NSNumber *n = csl_decode(data, 0, @{
-        @"type": @"uint8",
+        @"type": @"number",
+        @"numberType": @"uint8",
         @"scale": @100
     }, &length);
     XCTAssertEqual([n intValue], 200);
@@ -47,7 +48,8 @@ void assertArrayEql(NSData *data, uint length, Byte *arr) {
     Byte bytes[] = {0xFE, 0xFF};
     NSData *data = [NSData dataWithBytes:bytes length:sizeof(bytes)];
     NSNumber *n = csl_decode(data, 0, @{
-        @"type": @"int16le"
+        @"type": @"number",
+        @"numberType": @"int16le"
     }, &length);
     XCTAssertEqual([n intValue], -2);
     XCTAssertEqual(length, 2);
@@ -58,7 +60,8 @@ void assertArrayEql(NSData *data, uint length, Byte *arr) {
     Byte bytes[] = {0xFF, 0xFE};
     NSData *data = [NSData dataWithBytes:bytes length:sizeof(bytes)];
     NSNumber *n = csl_decode(data, 0, @{
-        @"type": @"int16be"
+        @"type": @"number",
+        @"numberType": @"int16be"
     }, &length);
     XCTAssertEqual([n intValue], -2);
     XCTAssertEqual(length, 2);
@@ -69,7 +72,8 @@ void assertArrayEql(NSData *data, uint length, Byte *arr) {
     Byte bytes[] = {0xFE, 0xFF, 0xFF, 0xFF};
     NSData *data = [NSData dataWithBytes:bytes length:sizeof(bytes)];
     NSNumber *n = csl_decode(data, 0, @{
-        @"type": @"int32le"
+        @"type": @"number",
+        @"numberType": @"int32le"
     }, &length);
     XCTAssertEqual([n intValue], -2);
     XCTAssertEqual(length, 4);
@@ -80,7 +84,8 @@ void assertArrayEql(NSData *data, uint length, Byte *arr) {
     Byte bytes[] = {0xFF, 0xFF, 0xFF, 0xFE};
     NSData *data = [NSData dataWithBytes:bytes length:sizeof(bytes)];
     NSNumber *n = csl_decode(data, 0, @{
-        @"type": @"int32be"
+        @"type": @"number",
+        @"numberType": @"int32be"
     }, &length);
     XCTAssertEqual([n intValue], -2);
     XCTAssertEqual(length, 4);
@@ -91,7 +96,8 @@ void assertArrayEql(NSData *data, uint length, Byte *arr) {
     Byte bytes[] = {0x01, 0x00};
     NSData *data = [NSData dataWithBytes:bytes length:sizeof(bytes)];
     NSNumber *n = csl_decode(data, 0, @{
-        @"type": @"uint16le"
+        @"type": @"number",
+        @"numberType": @"uint16le"
     }, &length);
     XCTAssertEqual([n intValue], 1);
     XCTAssertEqual(length, 2);
@@ -102,7 +108,8 @@ void assertArrayEql(NSData *data, uint length, Byte *arr) {
     Byte bytes[] = {0x00, 0x01};
     NSData *data = [NSData dataWithBytes:bytes length:sizeof(bytes)];
     NSNumber *n = csl_decode(data, 0, @{
-        @"type": @"uint16be"
+        @"type": @"number",
+        @"numberType": @"uint16be"
     }, &length);
     XCTAssertEqual([n intValue], 1);
     XCTAssertEqual(length, 2);
@@ -113,7 +120,8 @@ void assertArrayEql(NSData *data, uint length, Byte *arr) {
     Byte bytes[] = {1, 0, 0, 0};
     NSData *data = [NSData dataWithBytes:bytes length:sizeof(bytes)];
     NSNumber *n = csl_decode(data, 0, @{
-        @"type": @"uint32le"
+        @"type": @"number",
+        @"numberType": @"uint32le"
     }, &length);
     XCTAssertEqual([n intValue], 1);
     XCTAssertEqual(length, 4);
@@ -124,7 +132,8 @@ void assertArrayEql(NSData *data, uint length, Byte *arr) {
     Byte bytes[] = {0, 0, 0, 1};
     NSData *data = [NSData dataWithBytes:bytes length:sizeof(bytes)];
     NSNumber *n = csl_decode(data, 0, @{
-        @"type": @"uint32be"
+        @"type": @"number",
+        @"numberType": @"uint32be"
     }, &length);
     XCTAssertEqual([n intValue], 1);
     XCTAssertEqual(length, 4);
@@ -135,7 +144,8 @@ void assertArrayEql(NSData *data, uint length, Byte *arr) {
     Byte bytes[] = {0x00, 0x00, 0xD0, 0x40};
     NSData *data = [NSData dataWithBytes:bytes length:sizeof(bytes)];
     NSNumber *n = csl_decode(data, 0, @{
-        @"type": @"float32le"
+        @"type": @"number",
+        @"numberType": @"float32le"
     }, &length);
     XCTAssertEqual([n floatValue], 6.5);
     XCTAssertEqual(length, 4);
@@ -230,7 +240,7 @@ void assertArrayEql(NSData *data, uint length, Byte *arr) {
     NSDictionary *value = csl_decode(data, 0, @{
         @"type":@"object",
         @"attributes":@[
-            @{@"name":@"n",@"type":@"uint8"},
+            @{@"name":@"n",@"type":@"number",@"numberType":@"uint8"},
             @{@"name":@"s",@"type":@"string",@"byteLength":@3}
         ]
     }, &length);
@@ -250,7 +260,7 @@ void assertArrayEql(NSData *data, uint length, Byte *arr) {
         @"attributes":@[
             @{@"name":@"a",@"type":@"boolean",@"mask":@1}, //0x01
             @{@"name":@"b",@"type":@"boolean",@"mask":@2}, //0x00
-            @{@"name":@"c",@"type":@"uint8",@"mask":@0xF0} //0x20
+            @{@"name":@"c",@"type":@"number",@"numberType":@"uint8",@"mask":@0xF0} //0x20
         ]
     }, &length);
     XCTAssertTrue([(NSNumber*)value[@"a"] boolValue]);
@@ -267,7 +277,7 @@ void assertArrayEql(NSData *data, uint length, Byte *arr) {
         @"type":@"array",
         @"byteLength":@3,
         @"arrayItem":@{
-            @"type":@"uint8"
+            @"type":@"number",@"numberType":@"uint8"
         }
     }, &length);
     XCTAssertEqual(array.count, 3);
@@ -277,72 +287,72 @@ void assertArrayEql(NSData *data, uint length, Byte *arr) {
 }
 
 - (void)testEncode_uint8 {
-    NSData *data = csl_encode(@8, @{@"type":@"uint8"});
+    NSData *data = csl_encode(@8, @{@"type":@"number",@"numberType":@"uint8"});
     Byte bytes[] = {8};
     assertArrayEql(data, sizeof(bytes), bytes);
 }
 
 - (void)testEncode_uint8_scale {
-    NSData *data = csl_encode(@0.8, @{@"type":@"uint8",@"scale":@0.1});
+    NSData *data = csl_encode(@0.8, @{@"type":@"number",@"numberType":@"uint8",@"scale":@0.1});
     Byte bytes[] = {8};
     assertArrayEql(data, sizeof(bytes), bytes);
 }
 
 - (void)testEncode_uint8_hex {
-    NSData *data = csl_encode(@"0xF1", @{@"type":@"uint8"});
+    NSData *data = csl_encode(@"0xF1", @{@"type":@"number",@"numberType":@"uint8"});
     Byte bytes[] = {0xF1};
     assertArrayEql(data, sizeof(bytes), bytes);
 }
 
 - (void)testEncode_uint16be {
-    NSData *data = csl_encode(@0x11FF, @{@"type":@"uint16be"});
+    NSData *data = csl_encode(@0x11FF, @{@"type":@"number",@"numberType":@"uint16be"});
     Byte bytes[] = {0x11, 0xFF};
     assertArrayEql(data, sizeof(bytes), bytes);}
 
 - (void)testEncode_int16be {
-    NSData *data = csl_encode(@-2, @{@"type":@"int16be"});
+    NSData *data = csl_encode(@-2, @{@"type":@"number",@"numberType":@"int16be"});
     Byte bytes[] = {0xFF, 0xFE};
     assertArrayEql(data, sizeof(bytes), bytes);
 }
 
 - (void)testEncode_uint16le {
-    NSData *data = csl_encode(@0x11FF, @{@"type":@"uint16le"});
+    NSData *data = csl_encode(@0x11FF, @{@"type":@"number",@"numberType":@"uint16le"});
     Byte bytes[] = {0xFF, 0x11};
     assertArrayEql(data, sizeof(bytes), bytes);
 }
 
 - (void)testEncode_int16le {
-    NSData *data = csl_encode(@-2, @{@"type":@"int16le"});
+    NSData *data = csl_encode(@-2, @{@"type":@"number",@"numberType":@"int16le"});
     Byte bytes[] = {0xFE, 0xFF};
     assertArrayEql(data, sizeof(bytes), bytes);
 }
 
 - (void)testEncode_int32be {
-    NSData *data = csl_encode(@-2, @{@"type":@"int32be"});
+    NSData *data = csl_encode(@-2, @{@"type":@"number",@"numberType":@"int32be"});
     Byte bytes[] = {0xFF, 0xFF, 0xFF, 0xFE};
     assertArrayEql(data, sizeof(bytes), bytes);
 }
 
 - (void)testEncode_int32le {
-    NSData *data = csl_encode(@-2, @{@"type":@"int32le"});
+    NSData *data = csl_encode(@-2, @{@"type":@"number",@"numberType":@"int32le"});
     Byte bytes[] = {0xFE, 0xFF, 0xFF, 0xFF};
     assertArrayEql(data, sizeof(bytes), bytes);
 }
 
 - (void)testEncode_uint32be {
-    NSData *data = csl_encode(@0xFFFFFFFE, @{@"type":@"uint32be"});
+    NSData *data = csl_encode(@0xFFFFFFFE, @{@"type":@"number",@"numberType":@"uint32be"});
     Byte bytes[] = {0xFF, 0xFF, 0xFF, 0xFE};
     assertArrayEql(data, sizeof(bytes), bytes);
 }
 
 - (void)testEncode_uint32le {
-    NSData *data = csl_encode(@0xFFFFFFFE, @{@"type":@"uint32le"});
+    NSData *data = csl_encode(@0xFFFFFFFE, @{@"type":@"number",@"numberType":@"uint32le"});
     Byte bytes[] = {0xFE, 0xFF, 0xFF, 0xFF};
     assertArrayEql(data, sizeof(bytes), bytes);
 }
 
 - (void)testEncode_float32le {
-    NSData *data = csl_encode(@6.5, @{@"type":@"float32le"});
+    NSData *data = csl_encode(@6.5, @{@"type":@"number",@"numberType":@"float32le"});
     Byte bytes[] = {0x00, 0x00, 0xD0, 0x40};
     assertArrayEql(data, sizeof(bytes), bytes);
 }
@@ -372,7 +382,7 @@ void assertArrayEql(NSData *data, uint length, Byte *arr) {
     NSData *data = csl_encode(@{@"n":@1,@"s":@"012"}, @{
         @"type":@"object",
         @"attributes":@[
-            @{@"name":@"n",@"type":@"uint8"},
+            @{@"name":@"n",@"type":@"number",@"numberType":@"uint8"},
             @{@"name":@"s",@"type":@"string",@"byteLength":@3}
         ]
     });
@@ -387,7 +397,7 @@ void assertArrayEql(NSData *data, uint length, Byte *arr) {
         @"attributes":@[
             @{@"name":@"a",@"type":@"boolean",@"mask":@1}, //0x01
             @{@"name":@"b",@"type":@"boolean",@"mask":@2}, //0x00
-            @{@"name":@"c",@"type":@"uint8",@"mask":@0xF0} //0x20
+            @{@"name":@"c",@"type":@"number",@"numberType":@"uint8",@"mask":@0xF0} //0x20
         ]
     });
     Byte bytes[] = {0x21};
@@ -398,7 +408,7 @@ void assertArrayEql(NSData *data, uint length, Byte *arr) {
     NSData *data = csl_encode(@[@1,@2,@3], @{
         @"type":@"array",
         @"arrayItem":@{
-            @"type":@"uint8"
+            @"type":@"number",@"numberType":@"uint8"
         }
     });
     Byte bytes[] = {1,2,3};

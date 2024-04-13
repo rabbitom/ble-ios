@@ -18,14 +18,7 @@ void checkLength(NSData *data, int offset, int byteLength, int *pLength) {
     *pLength = byteLength;
 }
 
-id csl_value_with_scale(int value, NSNumber *scale) {
-    if(scale != nil)
-        return [NSNumber numberWithFloat: value * scale.floatValue];
-    else
-        return [NSNumber numberWithInt: value];
-}
-
-id csl_decode_uint(NSData* data, int offset, uint bits, bool le, NSNumber *scale, int *pLength) {
+id csl_decode_uint(NSData* data, int offset, uint bits, bool le, int *pLength) {
     int byteLength = bits / 8;
     checkLength(data, offset, byteLength, pLength);
     Byte* bytes = (Byte*)[data bytes];
@@ -36,10 +29,10 @@ id csl_decode_uint(NSData* data, int offset, uint bits, bool le, NSNumber *scale
         else
             result = (result << 8) | bytes[offset + i];
     }
-    return csl_value_with_scale(result, scale);
+    return @(result);
 }
 
-id csl_decode_int16(NSData* data, int offset, bool le, NSNumber *scale, int *pLength) {
+id csl_decode_int16(NSData* data, int offset, bool le, int *pLength) {
     checkLength(data, offset, 2, pLength);
     Byte* bytes = (Byte*)[data bytes];
     short result = 0;
@@ -49,10 +42,10 @@ id csl_decode_int16(NSData* data, int offset, bool le, NSNumber *scale, int *pLe
         else
             result = (result << 8) | bytes[offset + i];
     }
-    return csl_value_with_scale(result, scale);
+    return @(result);
 }
 
-id csl_decode_int32(NSData* data, int offset, bool le, NSNumber *scale, int *pLength) {
+id csl_decode_int32(NSData* data, int offset, bool le, int *pLength) {
     checkLength(data, offset, 4, pLength);
     Byte* bytes = (Byte*)[data bytes];
     int result = 0;
@@ -62,7 +55,7 @@ id csl_decode_int32(NSData* data, int offset, bool le, NSNumber *scale, int *pLe
         else
             result = (result << 8) | bytes[offset + i];
     }
-    return csl_value_with_scale(result, scale);
+    return @(result);
 }
 
 id csl_decode_float32le(NSData* data, int offset, int *pLength) {
@@ -252,26 +245,37 @@ id csl_decode_array(NSData *data, int offset, NSDictionary *config, int *pLength
 
 id csl_decode(NSData *data, int offset, NSDictionary *config, int *pLength) {
     NSString *type = config[@"type"];
-    if([type isEqual: @"uint8"])
-        return csl_decode_uint(data, offset, 8, false, config[@"scale"], pLength);
-    else if([type isEqual: @"uint16be"])
-        return csl_decode_uint(data, offset, 16, false, config[@"scale"], pLength);
-    else if([type isEqual: @"uint16le"])
-        return csl_decode_uint(data, offset, 16, true, config[@"scale"], pLength);
-    else if([type isEqual: @"int16be"])
-        return csl_decode_int16(data, offset, false, config[@"scale"], pLength);
-    else if([type isEqual: @"int16le"])
-        return csl_decode_int16(data, offset, true, config[@"scale"], pLength);
-    else if([type isEqual: @"uint32be"])
-        return csl_decode_uint(data, offset, 32, false, config[@"scale"], pLength);
-    else if([type isEqual: @"uint32le"])
-        return csl_decode_uint(data, offset, 32, true, config[@"scale"], pLength);
-    else if([type isEqual: @"int32be"])
-        return csl_decode_int32(data, offset, false, config[@"scale"], pLength);
-    else if([type isEqual: @"int32le"])
-        return csl_decode_int32(data, offset, true, config[@"scale"], pLength);
-    else if([type isEqual: @"float32le"])
-        return csl_decode_float32le(data, offset, pLength);
+    if([type isEqual: @"number"]) {
+        NSString *numberType = config[@"numberType"];
+        NSNumber *number;
+        if([numberType isEqual: @"uint8"])
+            number = csl_decode_uint(data, offset, 8, false, pLength);
+        else if([numberType isEqual: @"uint16be"])
+            number = csl_decode_uint(data, offset, 16, false, pLength);
+        else if([numberType isEqual: @"uint16le"])
+            number = csl_decode_uint(data, offset, 16, true, pLength);
+        else if([numberType isEqual: @"int16be"])
+            number = csl_decode_int16(data, offset, false, pLength);
+        else if([numberType isEqual: @"int16le"])
+            number = csl_decode_int16(data, offset, true, pLength);
+        else if([numberType isEqual: @"uint32be"])
+            number = csl_decode_uint(data, offset, 32, false, pLength);
+        else if([numberType isEqual: @"uint32le"])
+            number = csl_decode_uint(data, offset, 32, true, pLength);
+        else if([numberType isEqual: @"int32be"])
+            number = csl_decode_int32(data, offset, false, pLength);
+        else if([numberType isEqual: @"int32le"])
+            number = csl_decode_int32(data, offset, true, pLength);
+        else if([numberType isEqual: @"float32le"])
+            number = csl_decode_float32le(data, offset, pLength);
+        else
+            @throw [NSException exceptionWithName:@"Decoding failed" reason:@"numberType not supported" userInfo:@{@"config":config}];
+        NSNumber *scale = config[@"scale"];
+        if(scale)
+            return @(number.floatValue * scale.floatValue);
+        else
+            return number;
+    }
     else if([type isEqual: @"string"])
         return csl_decode_string(data, offset, config, pLength);
     else if([type isEqual: @"bytes"])
@@ -447,36 +451,40 @@ NSData* csl_encode(id value, NSDictionary *config) {
     NSString *type = config[@"type"];
     if(type == nil)
         @throw [NSException exceptionWithName:@"Encoding failed" reason:@"type not set" userInfo:@{@"config":config}];
-    else if([type isEqualToString:@"uint8"]) {
-        if([value isKindOfClass:[NSNumber class]])
-            return csl_encode_int((NSNumber*)value, 8, false, config[@"scale"]);
-        else if([value isKindOfClass:[NSString class]]) {
+    else if([type isEqualToString:@"number"]) {
+        if([value isKindOfClass:[NSString class]]) {
             NSData *data = csl_parse_hex_str((NSString*)value);
             if(data.length != 1)
                 @throw [NSException exceptionWithName:@"Encoding failed" reason:@"value length error" userInfo:@{@"config":config,@"value":value}];
             return data;
         }
-        else
+        if(![value isKindOfClass:[NSNumber class]])
             @throw [NSException exceptionWithName:@"Encoding failed" reason:@"value class error" userInfo:@{@"config":config,@"value":value}];
+        NSNumber *numberValue = (NSNumber*)value;
+        NSString *numberType = config[@"numberType"];
+        if([numberType isEqualToString:@"uint8"])
+            return csl_encode_int(numberValue, 8, false, config[@"scale"]);
+        else if([numberType isEqualToString:@"uint16be"])
+            return csl_encode_int(numberValue, 16, false, config[@"scale"]);
+        else if([numberType isEqualToString:@"uint16le"])
+            return csl_encode_int(numberValue, 16, true, config[@"scale"]);
+        else if([numberType isEqualToString:@"int16be"])
+            return csl_encode_int(numberValue, 16, false, config[@"scale"]);
+        else if([numberType isEqualToString:@"int16le"])
+            return csl_encode_int(numberValue, 16, true, config[@"scale"]);
+        else if([numberType isEqualToString:@"uint32be"])
+            return csl_encode_int(numberValue, 32, false, config[@"scale"]);
+        else if([numberType isEqualToString:@"uint32le"])
+            return csl_encode_int(numberValue, 32, true, config[@"scale"]);
+        else if([numberType isEqualToString:@"int32be"])
+            return csl_encode_int(numberValue, 32, false, config[@"scale"]);
+        else if([numberType isEqualToString:@"int32le"])
+            return csl_encode_int(numberValue, 32, true, config[@"scale"]);
+        else if([numberType isEqualToString:@"float32le"])
+            return csl_encode_float32le(numberValue, config[@"scale"]);
+        else
+            @throw [NSException exceptionWithName:@"Encoding failed" reason:@"numberType not supported" userInfo:@{@"config":config,@"value":value}];
     }
-    else if([type isEqualToString:@"uint16be"])
-        return csl_encode_int((NSNumber*)value, 16, false, config[@"scale"]);
-    else if([type isEqualToString:@"uint16le"])
-        return csl_encode_int((NSNumber*)value, 16, true, config[@"scale"]);
-    else if([type isEqualToString:@"int16be"])
-        return csl_encode_int((NSNumber*)value, 16, false, config[@"scale"]);
-    else if([type isEqualToString:@"int16le"])
-        return csl_encode_int((NSNumber*)value, 16, true, config[@"scale"]);
-    else if([type isEqualToString:@"uint32be"])
-        return csl_encode_int((NSNumber*)value, 32, false, config[@"scale"]);
-    else if([type isEqualToString:@"uint32le"])
-        return csl_encode_int((NSNumber*)value, 32, true, config[@"scale"]);
-    else if([type isEqualToString:@"int32be"])
-        return csl_encode_int((NSNumber*)value, 32, false, config[@"scale"]);
-    else if([type isEqualToString:@"int32le"])
-        return csl_encode_int((NSNumber*)value, 32, true, config[@"scale"]);
-    else if([type isEqualToString:@"float32le"])
-        return csl_encode_float32le((NSNumber*)value, config[@"scale"]);
     else if([type isEqualToString:@"string"]) {
         NSNumber *length = config[@"byteLength"];
         if(length == nil)
