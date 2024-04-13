@@ -522,8 +522,15 @@ NSString *csl_format_value(id value, NSDictionary *config) {
     else if([config[@"type"] isEqualToString:@"object"]) {
         if(![value isKindOfClass:[NSDictionary class]])
             @throw [NSException exceptionWithName:@"Format failed" reason:@"value class not matched with type" userInfo:@{@"value":value,@"config":config}];
-        if([config[@"formatOptions"][@"keysSet"] isEqualToNumber:@YES])
-            return [[(NSDictionary*)value keysSet] componentsJoinedByString:@", "];
+        if([config[@"formatOptions"][@"keysSet"] isEqualToNumber:@YES]) {
+            NSArray* keysSet = [(NSDictionary*)value keysSet];
+            if(keysSet.count)
+                return [keysSet componentsJoinedByString:@", "];
+            else
+                return @"-";
+        }
+        else if([config[@"formatOptions"][@"ellipsis"] isEqualToNumber:@YES])
+            return @"...";
         else {
             NSMutableArray *values = [NSMutableArray array];
             for(NSDictionary *attribute in config[@"attributes"]) {
