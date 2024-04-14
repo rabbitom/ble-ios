@@ -22,6 +22,8 @@
     
     BOOL loadingFeaturesBeforeReady;
     int loadingFeatureIndex;
+    
+    BOOL isBusy;
 }
 
 @end
@@ -71,6 +73,14 @@
 
 - (NSArray*)settings {
     return metadata[@"settings"];
+}
+
+- (NSDictionary*)polling {
+    return metadata[@"polling"];
+}
+
+- (BOOL)isBusy {
+    return isBusy;
 }
 
 - (void)updateServices: (NSArray*)servicesArray {
@@ -255,6 +265,7 @@
 
 - (void)onReceivedData: (NSData*)data from: (NSString*)characteristicName {
     if([characteristicName isEqual:@"recv"] && metadata[@"packet"]) {
+        isBusy = NO;
         int decodeLength = 0;
         NSDictionary *packet;
         @try {
@@ -366,6 +377,7 @@
     }
     NSData *packet = csl_encode(packetValue, packetConfig);
     [self writeData:packet to:@"send"];
+    isBusy = YES;
     return NO;
 }
 

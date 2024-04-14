@@ -28,6 +28,8 @@
 
 @property (readonly) NSMutableDictionary *state;
 
+@property (readonly) BOOL isBusy;
+
 - (id)initWithPeripheral: (CBPeripheral*)peripheral advertisementData: (NSDictionary*)ad classMetadata: (NSDictionary*)classMetadata;
 - (void)updateAdvertisementData: (NSDictionary*)ad;
 - (void)updateServiceData;
@@ -50,5 +52,6 @@
 - (id)stateValueOfFeature: (NSString*)name formatted: (BOOL)format;
 
 - (NSArray*)settings;
+- (NSDictionary*)polling;
 
 @end
