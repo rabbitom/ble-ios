@@ -20,6 +20,8 @@
     int loadingFeatureIndex;
     
     BOOL isBusy;
+    BOOL isPolling;
+    NSUInteger pollingIndex;
 }
 
 - (id)initWithMetadata:(NSDictionary *)_metadata {
@@ -69,6 +71,38 @@
 
 - (void)onReady {
     [[NSNotificationCenter defaultCenter] postNotificationName:DeviceReady object:self];
+    if(metadata[@"polling"])
+        [self startPolling];
+}
+
+- (BOOL)isPolling {
+    return isPolling;
+}
+
+- (void)startPolling {
+    isPolling = YES;
+    pollingIndex = 0;
+    NSLog(@"[CSL]polling started");
+    [self poll];
+}
+
+- (void)stopPolling {
+    isPolling = NO;
+    NSLog(@"[CSL]polling stopped");
+}
+
+- (void)poll {
+    NSArray *pollingFeatures = metadata[@"polling"][@"features"];
+    NSString *pollingFeature = pollingFeatures[pollingIndex];
+    NSLog(@"[CSL]polling feature: %@", pollingFeature);
+    @try {
+        [self callFeature:pollingFeature withValue:nil];
+    }
+    @catch(NSException *exception) {
+        NSLog(@"[Settings]poll feature failed: %@", exception);
+        [self stopPolling];
+    }
+    pollingIndex = (pollingIndex + 1) % pollingFeatures.count;
 }
 
 - (void)updateStateValue: (id)value keyPath: (NSString*)keyPath {
@@ -102,26 +136,27 @@
         }
         @catch(NSException *exception) {
             NSLog(@"[CSL]decoding packet failed: %@", exception);
-            return;
         }
-        NSNumber *featureId = packet[@"featureId"];
-        id featurePayload = packet[@"featurePayload"];
-        if(featurePayload) {
+        if(packet) {
+            NSNumber *featureId = packet[@"featureId"];
             NSDictionary *feature = featuresById[featureId];
             if(feature != nil) {
                 id value;
-                NSDictionary *payloadConfig = (feature[@"response"] != nil) ? feature[@"response"] : feature[@"payload"];
-                if(payloadConfig) {
-                    @try {
-                        value = csl_decode(featurePayload, 0, payloadConfig, &decodeLength);
+                id featurePayload = packet[@"featurePayload"];
+                if(featurePayload != nil) {
+                    NSDictionary *payloadConfig = (feature[@"response"] != nil) ? feature[@"response"] : feature[@"payload"];
+                    if(payloadConfig) {
+                        @try {
+                            value = csl_decode(featurePayload, 0, payloadConfig, &decodeLength);
+                        }
+                        @catch(NSException *exception) {
+                            NSLog(@"[CSL]decoding feature payload failed: %@", exception);
+                            return;
+                        }
+                        NSString *stateKeyPath = payloadConfig[@"stateKeyPath"];
+                        if(stateKeyPath)
+                            [self updateStateValue:value keyPath:stateKeyPath];
                     }
-                    @catch(NSException *exception) {
-                        NSLog(@"[CSL]decoding feature payload failed: %@", exception);
-                        return;
-                    }
-                    NSString *stateKeyPath = payloadConfig[@"stateKeyPath"];
-                    if(stateKeyPath)
-                        [self updateStateValue:value keyPath:stateKeyPath];
                 }
                 if(loadingFeaturesBeforeReady)
                     [self loadFeatureBeforeReady];
@@ -131,6 +166,8 @@
             else
                 NSLog(@"[CSL]feature not found: %#X", [featureId intValue]);
         }
+        if(isPolling)
+            [self poll];
     }
 }
 

@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreBluetooth/CoreBluetooth.h>
-#import "CSLDevice.h"
+#import <BLESDK/CSLDevice.h>
 
 @interface BLEDevice : CSLDevice <CBPeripheralDelegate>
 {
