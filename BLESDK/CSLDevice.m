@@ -43,10 +43,6 @@
     return state;
 }
 
-- (NSArray*)settings {
-    return metadata[@"settings"];
-}
-
 - (BOOL)isBusy {
     return isBusy;
 }
@@ -99,7 +95,7 @@
         [self callFeature:pollingFeature withValue:nil];
     }
     @catch(NSException *exception) {
-        NSLog(@"[Settings]poll feature failed: %@", exception);
+        NSLog(@"[CSL]poll feature failed: %@", exception);
         [self stopPolling];
     }
     pollingIndex = (pollingIndex + 1) % pollingFeatures.count;
@@ -187,36 +183,26 @@
     }];
 }
 
-- (id)stateValueOfFeature: (NSString*)featureName formatted: (BOOL)format {
+- (id)stateValueOf: (NSDictionary*)config formatted: (BOOL)format {
     id value;
-    NSDictionary *feature = featuresByName[featureName];
-    if(feature) {
-        NSString *stateKeyPath = feature[@"stateKeyPath"];
-        if(stateKeyPath) {
-            if([stateKeyPath isEqualToString:@"..."]) {
-                NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-                for(NSDictionary *attr in feature[@"attributes"]) {
-                    NSString *attrName = attr[@"name"];
-                    id attrValue = state[attrName];
-                    [dict setValue:attrValue forKeyPath:attrName];
-                }
-                value = dict;
+    NSString *stateKeyPath = config[@"stateKeyPath"];
+    if(stateKeyPath) {
+        if([stateKeyPath isEqualToString:@"..."]) {
+            NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+            for(NSDictionary *attr in config[@"attributes"]) {
+                NSString *attrName = attr[@"name"];
+                id attrValue = state[attrName];
+                [dict setValue:attrValue forKeyPath:attrName];
             }
-            else {
-                if([stateKeyPath hasSuffix:@"[]"])
-                    stateKeyPath = [stateKeyPath substringWithRange: NSMakeRange(0, stateKeyPath.length - 2)];
-                value = [state valueForKeyPath:stateKeyPath];
-            }
-            if(value != nil && format) {
-                NSDictionary *config = feature;
-                for(NSString *payloadKey in @[@"request", @"response", @"payload"]) {
-                    config = feature[payloadKey];
-                    if(config)
-                        break;
-                }
-                value = csl_format_value(value, config);
-            }
+            value = dict;
         }
+        else {
+            if([stateKeyPath hasSuffix:@"[]"])
+                stateKeyPath = [stateKeyPath substringWithRange: NSMakeRange(0, stateKeyPath.length - 2)];
+            value = [state valueForKeyPath:stateKeyPath];
+        }
+        if(value != nil && format)
+            value = csl_format_value(value, config);
     }
     return value;
 }

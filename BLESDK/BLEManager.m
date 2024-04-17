@@ -9,6 +9,7 @@
 #import "BLEManager.h"
 #import "BLEDevice.h"
 #import "BLEUtility.h"
+#import "Events.h"
 
 @implementation BLEManager
 {
@@ -187,7 +188,7 @@ static id instance;
             NSLog(@"device already created with peripheral: %@, new found peripheral: %@", originalPeripheral, peripheral);
     }
     ((BLEDevice*)device).rssi = [RSSI intValue];
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"BLEDevice.FoundDevice" object:device];
+    [[NSNotificationCenter defaultCenter] postNotificationName:FoundDevice object:device];
 }
 
 - (void)centralManager:(CBCentralManager *)central didConnectPeripheral:(CBPeripheral *)peripheral {
@@ -195,7 +196,7 @@ static id instance;
     BLEDevice *device = [self findDevice:peripheral.identifier];
     if(device != nil) {
         [device onConnected];
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"BLEDevice.Connected" object:device];
+        [[NSNotificationCenter defaultCenter] postNotificationName:DeviceConnected object:device];
     }
 }
 
@@ -204,14 +205,14 @@ static id instance;
     BLEDevice *device = [self findDevice:peripheral.identifier];
     if(device != nil)
         //[device onDisconnected];
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"BLEDevice.Disconnected" object:device userInfo:@{@"error": (error != nil) ? error : [NSNull null]}];
+        [[NSNotificationCenter defaultCenter] postNotificationName:DeviceDisconnected object:device userInfo:@{@"error": (error != nil) ? error : [NSNull null]}];
 }
 
 - (void)centralManager:(CBCentralManager *)central didFailToConnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error {
     NSLog(@"failed to connect peripheral: %@, error: %@", peripheral, error);
     BLEDevice *device = [self findDevice:peripheral.identifier];
     if(device != nil)
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"BLEDevice.FailedToConnect" object:device userInfo:@{@"error": (error != nil) ? error : [NSNull null]}];
+        [[NSNotificationCenter defaultCenter] postNotificationName:DeviceConnectFailed object:device userInfo:@{@"error": (error != nil) ? error : [NSNull null]}];
 }
 
 @end

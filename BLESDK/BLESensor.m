@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "BLESensor.h"
 #import "CSL.h"
+#import "Events.h"
 
 @interface BLESensor()
 {
@@ -53,7 +54,7 @@
 
 - (void)setValue: (id)newValue {
     value = newValue;
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"BLESensor.ValueUpdated" object:self userInfo:@{@"name":self.name, @"value":value}];
+    [[NSNotificationCenter defaultCenter] postNotificationName:ValueUpdated object:self userInfo:@{@"name":self.name, @"value":value}];
 }
 
 - (NSString*)valueString {

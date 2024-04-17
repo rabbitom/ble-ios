@@ -29,9 +29,7 @@
 - (NSDictionary*)featureWithName: (NSString*)name;
 - (BOOL)callFeature: (NSString*)name withValue: (id)value;
 - (void)onFeatureResponse: (NSString*)name value:(id)value;
-- (id)stateValueOfFeature: (NSString*)name formatted: (BOOL)format;
-
-- (NSArray*)settings;
+- (id)stateValueOf: (NSDictionary*)config formatted: (BOOL)format;
 
 @end
 

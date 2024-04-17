@@ -9,9 +9,15 @@
 #ifndef BLEEvents_h
 #define BLEEvents_h
 
-#define DeviceReady @"DeviceReady"
-#define FeatureResponse @"FeatureResponse"
-#define AdvUpdated @"AdvUpdated"
-#define ReceviedData @"ReceviedData"
+#define FoundDevice         @"FoundDevice"
+#define AdvUpdated          @"AdvUpdated"
+#define DeviceConnected     @"DeviceConnected"
+#define DeviceConnectFailed @"DeviceConnectFailed"
+#define DeviceDisconnected  @"DeviceDisconnected"
+#define DeviceReady         @"DeviceReady"
+#define FeatureResponse     @"FeatureResponse"
+#define FeatureProgress     @"FeatureProgress"
+#define ReceviedData        @"ReceviedData"
+#define ValueUpdated        @"ValueUpdated"
 
 #endif /* BLEEvents_h */
