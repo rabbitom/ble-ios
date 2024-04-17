@@ -31,6 +31,9 @@
 - (void)onFeatureResponse: (NSString*)name value:(id)value;
 - (id)stateValueOf: (NSDictionary*)config formatted: (BOOL)format;
 
+- (void)startPolling;
+- (void)stopPolling;
+
 @end
 
 #endif /* CSLDevice_h */
