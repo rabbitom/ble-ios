@@ -17,6 +17,9 @@
 		E2534C101DCB8A4500F61CCF /* BLEManager.h in Headers */ = {isa = PBXBuildFile; fileRef = E2534C0E1DCB8A4500F61CCF /* BLEManager.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		E271B31A264CB4B200A8E7B4 /* BLESDKTests.m in Sources */ = {isa = PBXBuildFile; fileRef = E271B319264CB4B200A8E7B4 /* BLESDKTests.m */; };
 		E271B31C264CB4B200A8E7B4 /* BLESDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E29184901DC9B3BB0056278A /* BLESDK.framework */; };
+		E2A707452BCFB725005C6646 /* CSLDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = E2A707442BCFB725005C6646 /* CSLDevice.m */; };
+		E2A7074B2BCFC899005C6646 /* CSLDevice.h in Headers */ = {isa = PBXBuildFile; fileRef = E2A707462BCFB748005C6646 /* CSLDevice.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		E2A7074C2BCFC8A8005C6646 /* Events.h in Headers */ = {isa = PBXBuildFile; fileRef = E2A707472BCFBC35005C6646 /* Events.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		E2E1B9EE263BFFF20096536F /* CSL.h in Headers */ = {isa = PBXBuildFile; fileRef = E283FAE8263A8EE2007354B7 /* CSL.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		E2E1B9F0263BFFF20096536F /* BLESensor.h in Headers */ = {isa = PBXBuildFile; fileRef = E2A40D6F2636DF80000EE4AE /* BLESensor.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		E2E1B9F2263C000F0096536F /* CSL.m in Sources */ = {isa = PBXBuildFile; fileRef = E283FAEA263A8F06007354B7 /* CSL.m */; };
@@ -51,6 +54,9 @@
 		E29184901DC9B3BB0056278A /* BLESDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = BLESDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		E2A40D6E2636DF6E000EE4AE /* BLESensor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = BLESensor.m; path = BLESDK/BLESensor.m; sourceTree = SOURCE_ROOT; };
 		E2A40D6F2636DF80000EE4AE /* BLESensor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = BLESensor.h; path = BLESDK/BLESensor.h; sourceTree = SOURCE_ROOT; };
+		E2A707442BCFB725005C6646 /* CSLDevice.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = CSLDevice.m; path = BLESDK/CSLDevice.m; sourceTree = SOURCE_ROOT; };
+		E2A707462BCFB748005C6646 /* CSLDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CSLDevice.h; path = BLESDK/CSLDevice.h; sourceTree = SOURCE_ROOT; };
+		E2A707472BCFBC35005C6646 /* Events.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Events.h; path = BLESDK/Events.h; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,6 +105,8 @@
 			children = (
 				E283FAE8263A8EE2007354B7 /* CSL.h */,
 				E283FAEA263A8F06007354B7 /* CSL.m */,
+				E2A707462BCFB748005C6646 /* CSLDevice.h */,
+				E2A707442BCFB725005C6646 /* CSLDevice.m */,
 			);
 			name = CSL;
 			sourceTree = "<group>";
@@ -128,6 +136,7 @@
 				E247DD071DCB83A300F3808F /* BLE */,
 				E2A40D6B2636DBBC000EE4AE /* Sensor */,
 				E247DCFA1DCB838A00F3808F /* Info.plist */,
+				E2A707472BCFBC35005C6646 /* Events.h */,
 				E247DCFB1DCB838A00F3808F /* BLESDK.h */,
 			);
 			name = BLESDK;
@@ -154,7 +163,9 @@
 				E247DD051DCB838A00F3808F /* BLESDK.h in Headers */,
 				E24579AF2BBBED7600485A30 /* BLESensorDevice.h in Headers */,
 				E2534C101DCB8A4500F61CCF /* BLEManager.h in Headers */,
+				E2A7074B2BCFC899005C6646 /* CSLDevice.h in Headers */,
 				E247DCFC1DCB838A00F3808F /* BLEDevice.h in Headers */,
+				E2A7074C2BCFC8A8005C6646 /* Events.h in Headers */,
 				E247DD001DCB838A00F3808F /* BLEUtility.h in Headers */,
 				E2E1B9EE263BFFF20096536F /* CSL.h in Headers */,
 				E2E1B9F0263BFFF20096536F /* BLESensor.h in Headers */,
@@ -271,6 +282,7 @@
 			files = (
 				E2E1B9F2263C000F0096536F /* CSL.m in Sources */,
 				E2E1B9F4263C000F0096536F /* BLESensor.m in Sources */,
+				E2A707452BCFB725005C6646 /* CSLDevice.m in Sources */,
 				E247DD011DCB838A00F3808F /* BLEUtility.m in Sources */,
 				E247DCFD1DCB838A00F3808F /* BLEDevice.m in Sources */,
 				E2534C0F1DCB8A4500F61CCF /* BLEManager.m in Sources */,

@@ -8,13 +8,12 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreBluetooth/CoreBluetooth.h>
+#import "CSLDevice.h"
 
-@interface BLEDevice : NSObject <CBPeripheralDelegate>
+@interface BLEDevice : CSLDevice <CBPeripheralDelegate>
 {
     NSMutableDictionary *advertisementData;
-    NSDictionary *metadata;
     NSDictionary *serviceData;
-    NSMutableDictionary *state;
 }
 @property CBPeripheral *peripheral;
 @property (readonly) NSDictionary *advertisementData;
@@ -24,12 +23,6 @@
 @property (readonly) NSArray *deviceInfo;
 @property int rssi;
 
-@property (readonly) BOOL isConnected;
-
-@property (readonly) NSMutableDictionary *state;
-
-@property (readonly) BOOL isBusy;
-
 - (id)initWithPeripheral: (CBPeripheral*)peripheral advertisementData: (NSDictionary*)ad classMetadata: (NSDictionary*)classMetadata;
 - (void)updateAdvertisementData: (NSDictionary*)ad;
 - (void)updateServiceData;
@@ -37,21 +30,13 @@
 - (BOOL)connect;
 - (void)disconnect;
 - (void)onConnected;
-- (void)onReady;
+@property (readonly) BOOL isConnected;
 
 - (void)writeData: (NSData*)data to: (NSString*)characteristicName;
 - (void)readData: (NSString*)characteristicName;
-- (void)startReceivingData: (NSString*)characteristicName;
-- (void)stopReceivingData: (NSString*)characteristicName;
-- (BOOL)isReceivingData: (NSString*)characteristicName;
+- (void)startNotification: (NSString*)characteristicName;
+- (void)stopNotification: (NSString*)characteristicName;
+- (BOOL)isNofitying: (NSString*)characteristicName;
 - (void)onReceivedData: (NSData*)data from: (NSString*)characteristicName;
-
-- (NSDictionary*)featureWithName: (NSString*)name;
-- (BOOL)callFeature: (NSString*)name withValue: (id)value;
-- (void)onFeatureResponse: (NSString*)name value:(id)value;
-- (id)stateValueOfFeature: (NSString*)name formatted: (BOOL)format;
-
-- (NSArray*)settings;
-- (NSDictionary*)polling;
 
 @end
