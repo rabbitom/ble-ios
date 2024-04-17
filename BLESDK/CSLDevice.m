@@ -147,11 +147,12 @@
                         }
                         @catch(NSException *exception) {
                             NSLog(@"[CSL]decoding feature payload failed: %@", exception);
-                            return;
                         }
-                        NSString *stateKeyPath = payloadConfig[@"stateKeyPath"];
-                        if(stateKeyPath)
-                            [self updateStateValue:value keyPath:stateKeyPath];
+                        if(value) {
+                            NSString *stateKeyPath = payloadConfig[@"stateKeyPath"];
+                            if(stateKeyPath)
+                                [self updateStateValue:value keyPath:stateKeyPath];
+                        }
                     }
                 }
                 if(loadingFeaturesBeforeReady)

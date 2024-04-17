@@ -192,6 +192,23 @@ id csl_decode_object(NSData *data, int offset, NSDictionary *config, int *pLengt
         NSString *key = attr[@"name"];
         if([attr[@"type"] isEqualToString:@"variable"])
             attr = csl_get_variable_type(dict, attr);
+        //HolyiotLogger-ignore-0xFA-begin
+        if([key isEqualToString:@"data"]) {
+            BOOL ignore = YES;
+            int i = offset + totalLength;
+            unsigned char *bytes = (unsigned char*)data.bytes;
+            while(i < data.length) {
+                if(bytes[i++] != 0xFA) {
+                    ignore = NO;
+                    break;
+                }
+            }
+            if(ignore) {
+                NSLog(@"[CSL]ignore data with all 0xFA bytes");
+                break;
+            }
+        }
+        //HolyiotLogger-ignore-0xFA-end
         int attrLength = 0;
         dict[key] = csl_decode(data, offset + totalLength, attr, &attrLength);
         totalLength += attrLength;
