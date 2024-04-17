@@ -290,7 +290,7 @@
                         NSLog(@"[BLE]decoding feature payload failed: %@", exception);
                         return;
                     }
-                    NSString *stateKeyPath = feature[@"stateKeyPath"];
+                    NSString *stateKeyPath = payloadConfig[@"stateKeyPath"];
                     if(stateKeyPath)
                         [self updateStateValue:value keyPath:stateKeyPath];
                 }
@@ -365,12 +365,13 @@
         @throw [NSException exceptionWithName:@"Call feature failed" reason:@"feature not found" userInfo:@{@"name":name}];
     NSDictionary *packetConfig = metadata[@"packet"];
     NSMutableDictionary *packetValue = [NSMutableDictionary dictionaryWithDictionary:@{@"featureId": feature[@"id"]}];
-    if(feature[@"request"]) {
+    NSDictionary *featureRequest = feature[@"request"];
+    if(featureRequest) {
         if(value) {
-            NSData *payload = csl_encode(value, feature[@"request"]);
+            NSData *payload = csl_encode(value, featureRequest);
             [packetValue setObject:payload forKey:@"featurePayload"];
-            if(feature[@"stateKeyPath"])
-                [self updateStateValue:value keyPath:feature[@"stateKeyPath"]];
+            if(featureRequest[@"stateKeyPath"])
+                [self updateStateValue:value keyPath:featureRequest[@"stateKeyPath"]];
         }
         else
             @throw [NSException exceptionWithName:@"Call feature failed" reason:@"value not set" userInfo:@{@"name":name}];
