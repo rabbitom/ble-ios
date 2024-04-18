@@ -18,6 +18,7 @@
 @property (readonly) NSMutableDictionary *state;
 @property (readonly) BOOL isBusy;
 @property (readonly) BOOL isPolling;
+@property (readonly) BOOL isReady;
 
 - (id)initWithMetadata: (NSDictionary*)metadata;
 

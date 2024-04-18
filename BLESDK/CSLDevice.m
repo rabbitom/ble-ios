@@ -21,6 +21,7 @@
     
     BOOL isBusy;
     BOOL isPolling;
+    BOOL isReady;
     NSUInteger pollingIndex;
 }
 
@@ -34,7 +35,6 @@
             if(metadata[@"features"])
                 [self updateFeatures: metadata[@"features"]];
         }
-
     }
     return self;
 }
@@ -49,6 +49,7 @@
 
 - (void)beforeReady {
     if(metadata[@"featuresBeforeReady"]) {
+        isReady = NO;
         loadingFeatureIndex = 0;
         [self loadFeatureBeforeReady];
     }
@@ -66,9 +67,12 @@
 }
 
 - (void)onReady {
+    isReady = YES;
     [[NSNotificationCenter defaultCenter] postNotificationName:DeviceReady object:self];
-    if(metadata[@"polling"])
-        [self startPolling];
+}
+
+- (BOOL)isReady {
+    return isReady;
 }
 
 - (BOOL)isPolling {
