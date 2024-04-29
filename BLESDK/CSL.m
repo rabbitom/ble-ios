@@ -211,6 +211,27 @@ id csl_decode_object(NSData *data, int offset, NSDictionary *config, int *pLengt
         //HolyiotLogger-ignore-0xFA-end
         int attrLength = 0;
         dict[key] = csl_decode(data, offset + totalLength, attr, &attrLength);
+        //HolyiotLogger-split-0xF480F4-begin
+        if([key isEqualToString:@"featurePayload"] && [dict[@"featureId"] isEqualToNumber:@(0x80)]) {
+            Byte headerBytes[] = {0xF4, 0x80, 0xF4};
+            NSData *payloadData = dict[key];
+            Byte *payloadBytes = (Byte*)payloadData.bytes;
+            int payloadLength = (int)payloadData.length;
+            int dataIndex = 0;
+            while(dataIndex < payloadLength) {
+                int headerIndex = 0;
+                while(headerIndex < sizeof(headerBytes) && payloadBytes[dataIndex+headerIndex] == headerBytes[headerIndex])
+                    headerIndex++;
+                if(headerIndex == sizeof(headerBytes)) {
+                    dict[key] = [NSData dataWithBytes:payloadBytes length:dataIndex];
+                    attrLength = dataIndex;
+                    break;
+                }
+                else
+                    dataIndex++;
+            }
+        }
+        //HolyiotLogger-split-0xF480F4-end
         totalLength += attrLength;
         if(offset + totalLength == data.length)
             break; //skip remaining attributes, without checking for optional
