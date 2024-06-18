@@ -88,7 +88,7 @@ id csl_decode_string(NSData* data, int offset, NSDictionary *config, int *pLengt
         for(int i=0; i<length; i++)
             chars[i] = bytes[i];
         chars[length] = 0;
-        return [NSString stringWithCString:chars encoding:NSASCIIStringEncoding];
+        return [NSString stringWithCString:chars encoding:NSUTF8StringEncoding];
     }
 }
 
@@ -406,10 +406,10 @@ NSData *csl_encode_string(NSString *str, NSUInteger length, NSString *encoding) 
         }
     }
     else {
-        NSUInteger bytesLength = [str lengthOfBytesUsingEncoding:NSASCIIStringEncoding];
+        NSUInteger bytesLength = [str lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
         if(bytesLength > length)
             @throw [NSException exceptionWithName:@"Encoding failed" reason:@"string too long" userInfo:@{@"string":str,@"length":@(length)}];
-        [str getBytes:bytes maxLength:length usedLength:&usedLength encoding:NSASCIIStringEncoding options:NSStringEncodingConversionAllowLossy range:NSMakeRange(0, str.length) remainingRange:nil];
+        [str getBytes:bytes maxLength:length usedLength:&usedLength encoding:NSUTF8StringEncoding options:NSStringEncodingConversionAllowLossy range:NSMakeRange(0, str.length) remainingRange:nil];
     }
     while(usedLength < length)
         bytes[usedLength++] = 0;
