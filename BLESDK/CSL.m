@@ -126,11 +126,12 @@ id csl_decode_enum(NSData *data, int offset, NSArray *values, int *pLength) {
 }
 
 id csl_get_variable_type(NSDictionary *value, NSDictionary *config) {
-    NSString *typeName = value[config[@"typeName"]];
-    if(typeName) {
+    NSString *typeIndexName = config[@"typeIndex"];
+    NSNumber *typeIndexValue = value[typeIndexName];
+    if(typeIndexValue) {
         NSArray *types = config[@"types"];
         NSUInteger typeIndex = [types indexOfObjectPassingTest:^BOOL(NSDictionary *type, NSUInteger idx, BOOL * _Nonnull stop) {
-            return [type[@"name"] isEqualToString:typeName];
+            return [type[@"index"] isEqualToNumber:typeIndexValue];
         }];
         if(typeIndex != NSNotFound)
             return types[typeIndex];
@@ -138,7 +139,7 @@ id csl_get_variable_type(NSDictionary *value, NSDictionary *config) {
             @throw [NSException exceptionWithName:@"csl failed" reason:@"variable type not found" userInfo:@{@"config": config}];
     }
     else
-        @throw [NSException exceptionWithName:@"csl failed" reason:@"type name could not be determined" userInfo:@{@"config": config}];
+        @throw [NSException exceptionWithName:@"csl failed" reason:@"type could not be determined" userInfo:@{@"config": config}];
 }
 
 //for decode
