@@ -311,9 +311,11 @@ id csl_decode(NSData *data, int offset, NSDictionary *config, int *pLength) {
             @throw [NSException exceptionWithName:@"Decoding failed" reason:@"numberType not supported" userInfo:@{@"config":config}];
         NSNumber *scale = config[@"scale"];
         if(scale)
-            return @(number.floatValue * scale.floatValue);
-        else
-            return number;
+            number = @(number.floatValue * scale.floatValue);
+        NSNumber *offset = config[@"offset"];
+        if(offset)
+            number = @(number.floatValue + offset.floatValue);
+        return number;
     }
     else if([type isEqual: @"string"])
         return csl_decode_string(data, offset, config, pLength);
@@ -367,12 +369,8 @@ NSData *csl_parse_hex_str(NSString* str) {
     return res;
 }
 
-NSData *csl_encode_int(NSNumber *value, uint bits, BOOL le, NSNumber *scale) {
-    int n;
-    if(scale)
-        n = [value floatValue] / [scale floatValue];
-    else
-        n = [value intValue];
+NSData *csl_encode_int(NSNumber *value, uint bits, BOOL le) {
+    int n = [value intValue];
     uint length = bits/8;
     Byte bytes[length];
     for(int i=0; i<length; i++) {
@@ -386,10 +384,8 @@ NSData *csl_encode_int(NSNumber *value, uint bits, BOOL le, NSNumber *scale) {
     return [NSData dataWithBytes:bytes length:length];
 }
 
-NSData *csl_encode_float32le(NSNumber *value, NSNumber *scale) {
+NSData *csl_encode_float32le(NSNumber *value) {
     float v = [value floatValue];
-    if(scale)
-        v = v / [scale floatValue];
     return [NSData dataWithBytes:&v length:sizeof(v)];
 }
 
@@ -505,27 +501,33 @@ NSData* csl_encode(id value, NSDictionary *config) {
         if(![value isKindOfClass:[NSNumber class]])
             @throw [NSException exceptionWithName:@"Encoding failed" reason:@"value class error" userInfo:@{@"config":config,@"value":value}];
         NSNumber *numberValue = (NSNumber*)value;
+        NSNumber *offset = (NSNumber*)config[@"offset"];
+        if(offset)
+            numberValue = @(numberValue.floatValue - offset.floatValue);
+        NSNumber *scale = (NSNumber*)config[@"scale"];
+        if(scale)
+            numberValue = @(numberValue.floatValue / scale.floatValue);
         NSString *numberType = config[@"numberType"];
         if([numberType isEqualToString:@"uint8"])
-            return csl_encode_int(numberValue, 8, false, config[@"scale"]);
+            return csl_encode_int(numberValue, 8, false);
         else if([numberType isEqualToString:@"uint16be"])
-            return csl_encode_int(numberValue, 16, false, config[@"scale"]);
+            return csl_encode_int(numberValue, 16, false);
         else if([numberType isEqualToString:@"uint16le"])
-            return csl_encode_int(numberValue, 16, true, config[@"scale"]);
+            return csl_encode_int(numberValue, 16, true);
         else if([numberType isEqualToString:@"int16be"])
-            return csl_encode_int(numberValue, 16, false, config[@"scale"]);
+            return csl_encode_int(numberValue, 16, false);
         else if([numberType isEqualToString:@"int16le"])
-            return csl_encode_int(numberValue, 16, true, config[@"scale"]);
+            return csl_encode_int(numberValue, 16, true);
         else if([numberType isEqualToString:@"uint32be"])
-            return csl_encode_int(numberValue, 32, false, config[@"scale"]);
+            return csl_encode_int(numberValue, 32, false);
         else if([numberType isEqualToString:@"uint32le"])
-            return csl_encode_int(numberValue, 32, true, config[@"scale"]);
+            return csl_encode_int(numberValue, 32, true);
         else if([numberType isEqualToString:@"int32be"])
-            return csl_encode_int(numberValue, 32, false, config[@"scale"]);
+            return csl_encode_int(numberValue, 32, false);
         else if([numberType isEqualToString:@"int32le"])
-            return csl_encode_int(numberValue, 32, true, config[@"scale"]);
+            return csl_encode_int(numberValue, 32, true);
         else if([numberType isEqualToString:@"float32le"])
-            return csl_encode_float32le(numberValue, config[@"scale"]);
+            return csl_encode_float32le(numberValue);
         else
             @throw [NSException exceptionWithName:@"Encoding failed" reason:@"numberType not supported" userInfo:@{@"config":config,@"value":value}];
     }
@@ -563,46 +565,51 @@ NSString *csl_format_value(id value, NSDictionary *config) {
     if(value == nil)
         return nil;
     NSString *res;
-    if([config[@"type"] isEqualToString:@"array"]) {
-        if(![value isKindOfClass:[NSArray class]])
-            @throw [NSException exceptionWithName:@"Format failed" reason:@"value class not matched with type" userInfo:@{@"value":value,@"config":config}];
-        NSMutableArray *values = [NSMutableArray array];
-        for(id valueItem in (NSArray*)value)
-            [values addObject: csl_format_value(valueItem, config[@"arrayItem"])];
-        res = [NSString stringWithFormat:@"[%@]", [values componentsJoinedByString:@", "]];
-    }
-    else if([config[@"type"] isEqualToString:@"object"]) {
-        if(![value isKindOfClass:[NSDictionary class]])
-            @throw [NSException exceptionWithName:@"Format failed" reason:@"value class not matched with type" userInfo:@{@"value":value,@"config":config}];
-        if([config[@"formatOptions"][@"keysSet"] isEqualToNumber:@YES]) {
-            NSArray* keysSet = [(NSDictionary*)value keysSet];
-            if(keysSet.count)
-                return [keysSet componentsJoinedByString:@", "];
-            else
-                return @"-";
-        }
-        else if([config[@"formatOptions"][@"ellipsis"] isEqualToNumber:@YES])
-            return @"...";
-        else {
+    if([value isKindOfClass:[NSArray class]]) {
+        if([config[@"type"] isEqualToString:@"array"]) {
             NSMutableArray *values = [NSMutableArray array];
-            for(NSDictionary *attribute in config[@"attributes"]) {
-                id attributeValue = ((NSDictionary*)value)[attribute[@"name"]];
-                [values addObject: [NSString stringWithFormat:@"%@=%@", attribute[@"name"], csl_format_value(attributeValue, attribute)]];
+            NSArray *arrayKeys = config[@"arrayKeys"];
+            if(arrayKeys) {
+                for(int i=0; i<arrayKeys.count; i++) {
+                    NSString *key = arrayKeys[i];
+                    [values addObject: [NSString stringWithFormat:@"%@=%@", key, csl_format_value(((NSArray*)value)[i], config)]];
+                }
+                return [values componentsJoinedByString:@", "];
             }
-            return [values componentsJoinedByString:@", "];
         }
     }
-    else if(config[@"decimals"]) {
-        NSNumber *decimals = config[@"decimals"];
-        NSString *formatString = [NSString stringWithFormat:@"%%.%df", [decimals intValue]];
-        res = [NSString stringWithFormat:formatString, [(NSNumber*)value floatValue]];
+    else if([value isKindOfClass:[NSDictionary class]]) {
+        if([config[@"type"] isEqualToString:@"object"]) {
+            if([config[@"formatOptions"][@"keysSet"] isEqualToNumber:@YES]) {
+                NSArray* keysSet = [(NSDictionary*)value keysSet];
+                if(keysSet.count)
+                    return [keysSet componentsJoinedByString:@", "];
+                else
+                    return @"-";
+            }
+            else if([config[@"formatOptions"][@"ellipsis"] isEqualToNumber:@YES])
+                return @"...";
+            else {
+                NSMutableArray *values = [NSMutableArray array];
+                for(NSDictionary *attribute in config[@"attributes"]) {
+                    id attributeValue = ((NSDictionary*)value)[attribute[@"name"]];
+                    [values addObject: [NSString stringWithFormat:@"%@=%@", attribute[@"name"], csl_format_value(attributeValue, attribute)]];
+                }
+                return [values componentsJoinedByString:@", "];
+            }
+        }
     }
-    else
-        res = [(NSObject*)value description];
+    else if([value isKindOfClass:[NSNumber class]]) {
+        if(config[@"decimals"]) {
+            NSNumber *decimals = config[@"decimals"];
+            NSString *formatString = [NSString stringWithFormat:@"%%.%df", [decimals intValue]];
+            res = [NSString stringWithFormat:formatString, [(NSNumber*)value floatValue]];
+        }
+    }
+    res = [(NSObject*)value description];
     if(config[@"unit"])
-        return [res stringByAppendingString:config[@"unit"]];
-    else
-        return res;
+        res = [res stringByAppendingString:config[@"unit"]];
+    return res;
 }
 
 @implementation NSDictionary (KeysSet)
