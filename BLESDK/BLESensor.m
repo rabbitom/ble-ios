@@ -24,6 +24,7 @@
         config = _config;
         _switchable = isSwitchable;
         _state = [NSMutableDictionary dictionary];
+        unit = config[@"unit"];
     }
     return self;
 }
@@ -45,7 +46,7 @@
 }
 
 - (NSString*)unit {
-    return config[@"unit"];
+    return unit;
 }
 
 - (id)value {

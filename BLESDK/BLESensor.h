@@ -14,6 +14,7 @@
 @interface BLESensor : NSObject
 {
     NSDictionary *config;
+    NSString *unit;
 }
 
 @property (readonly) NSDictionary* config;
