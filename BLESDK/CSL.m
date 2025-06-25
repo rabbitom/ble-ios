@@ -572,7 +572,9 @@ NSString *csl_format_value(id value, NSDictionary *config) {
             if(arrayKeys) {
                 for(int i=0; i<arrayKeys.count; i++) {
                     NSString *key = arrayKeys[i];
-                    [values addObject: [NSString stringWithFormat:@"%@=%@", key, csl_format_value(((NSArray*)value)[i], config)]];
+                    id itemValue = ((NSArray*)value)[i];
+                    NSString *itemStr = csl_format_value(itemValue, config);
+                    [values addObject: [NSString stringWithFormat:@"%@=%@", key, itemStr]];
                 }
                 return [values componentsJoinedByString:@", "];
             }
@@ -606,7 +608,8 @@ NSString *csl_format_value(id value, NSDictionary *config) {
             res = [NSString stringWithFormat:formatString, [(NSNumber*)value floatValue]];
         }
     }
-    res = [(NSObject*)value description];
+    if(res == nil)
+        res = [(NSObject*)value description];
     if(config[@"unit"])
         res = [res stringByAppendingString:config[@"unit"]];
     return res;
